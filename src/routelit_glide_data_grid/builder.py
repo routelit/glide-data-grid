@@ -2,6 +2,7 @@ from typing import Any, Callable, ClassVar, Iterable, Literal, Optional, Union
 import pandas as pd
 from routelit import AssetTarget, RouteLitBuilder  # type: ignore[import-untyped]
 from .utils import normalize_data, extract_columns, infer_column_types
+from .types import ColumnConfig
 
 class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
     """
@@ -15,6 +16,21 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
             "path": "static",
         }
     ]
+
+    def _serialize_column_config(self, config: Optional[dict[str, Union[ColumnConfig, str, None]]]) -> Optional[dict[str, Any]]:
+        if config is None:
+            return None
+        
+        serialized = {}
+        for col, cfg in config.items():
+            if isinstance(cfg, ColumnConfig):
+                # Include the class name as type
+                data = cfg.to_dict()
+                data["type"] = cfg.__class__.__name__
+                serialized[col] = data
+            else:
+                serialized[col] = cfg
+        return serialized
 
     def data_grid(
         self,
@@ -30,9 +46,10 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
             None
         ] = None,
         on_select: Union[Literal["ignore", "rerun"], Callable[[dict], None], None] = "ignore",
-        column_config: Optional[dict[str, Any]] = None,
+        column_config: Optional[dict[str, Union[ColumnConfig, str, None]]] = None,
         column_order: Optional[Iterable[str]] = None,
         placeholder: Optional[str] = None,
+        theme: Optional[dict[str, Any]] = None,
         key: Optional[str] = None,
     ) -> Any:
         """
@@ -59,8 +76,9 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
             "hideIndex": hide_index,
             "rowHeight": row_height,
             "selectionMode": selection_mode,
-            "columnConfig": column_config,
+            "columnConfig": self._serialize_column_config(column_config),
             "placeholder": placeholder,
+            "theme": theme,
         }
         
         # Handle callbacks and return values
@@ -97,9 +115,10 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
         num_rows: Literal["fixed", "dynamic", "add", "delete"] = "fixed",
         disabled: Union[bool, Iterable[Union[str, int]]] = False,
         on_change: Optional[Callable[[Union[pd.DataFrame, dict, list]], None]] = None,
-        column_config: Optional[dict[str, Any]] = None,
+        column_config: Optional[dict[str, Union[ColumnConfig, str, None]]] = None,
         column_order: Optional[Iterable[str]] = None,
         placeholder: Optional[str] = None,
+        theme: Optional[dict[str, Any]] = None,
         key: Optional[str] = None,
     ) -> Any:
         """
@@ -127,8 +146,9 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
             "rowHeight": row_height,
             "numRows": num_rows,
             "disabled": disabled,
-            "columnConfig": column_config,
+            "columnConfig": self._serialize_column_config(column_config),
             "placeholder": placeholder,
+            "theme": theme,
         }
         
         element_key = key or self._new_text_id("grid_data_editor")
