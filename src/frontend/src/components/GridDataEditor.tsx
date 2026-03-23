@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect, memo } from "react";
 import {
   DataEditor,
   GridColumn,
@@ -30,7 +30,7 @@ interface GridDataEditorProps {
   };
 }
 
-export const GridDataEditor: React.FC<GridDataEditorProps> = ({
+export const GridDataEditor: React.FC<GridDataEditorProps> = memo(({
   data: initialData,
   columns,
   columnTypes,
@@ -176,6 +176,6 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = ({
       />
     </div>
   );
-};
+});
 
 export default GridDataEditor;
