@@ -45,3 +45,25 @@ export const MultiselectCellRenderer = {
   },
   copyData: "",
 };
+
+export const ImageCellRenderer = {
+  kind: GridCellKind.Custom,
+  allowOverlay: true,
+  readonly: true,
+  data: {
+    kind: "image-cell",
+    url: "",
+  },
+  copyData: "",
+};
+
+export const JsonCellRenderer = {
+  kind: GridCellKind.Custom,
+  allowOverlay: true,
+  readonly: false,
+  data: {
+    kind: "json-cell",
+    value: {},
+  },
+  copyData: "",
+};

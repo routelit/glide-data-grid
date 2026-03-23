@@ -1,5 +1,12 @@
 import { GridCell, GridCellKind } from "@glideapps/glide-data-grid";
-import { DateCellRenderer, DatetimeCellRenderer, SelectCellRenderer, MultiselectCellRenderer } from "./customRenderers";
+import { 
+  DateCellRenderer, 
+  DatetimeCellRenderer, 
+  SelectCellRenderer, 
+  MultiselectCellRenderer,
+  ImageCellRenderer,
+  JsonCellRenderer,
+} from "./customRenderers";
 
 export type PythonType = "str" | "int" | "float" | "bool" | "NoneType" | string;
 
@@ -56,12 +63,22 @@ export function mapPythonToGlideCell(
         };
       case "ImageColumn":
         return {
-          kind: GridCellKind.Image,
-          allowOverlay: true,
-          readonly: true,
-          data: [String(value)],
-          displayData: [String(value)],
-        };
+          ...ImageCellRenderer,
+          kind: GridCellKind.Custom,
+          data: {
+            kind: "image-cell",
+            url: String(value),
+          },
+        } as any;
+      case "JsonColumn":
+        return {
+          ...JsonCellRenderer,
+          kind: GridCellKind.Custom,
+          data: {
+            kind: "json-cell",
+            value: typeof value === "string" ? JSON.parse(value) : value,
+          },
+        } as any;
       case "DateColumn":
         return {
           ...DateCellRenderer,
