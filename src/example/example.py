@@ -1,0 +1,31 @@
+from flask import Flask, Response
+from routelit import RouteLit  # type: ignore[import-untyped]
+from routelit_flask import RouteLitFlaskAdapter  # type: ignore[import-untyped]
+
+from routelit_glide_data_grid import RLBuilder  # type: ignore[import-untyped]
+
+app = Flask(__name__)
+
+routelit = RouteLit(BuilderClass=RLBuilder)
+routelit_adapter = RouteLitFlaskAdapter(
+    routelit,
+    ### TO RUN with LOCAL VITE DEV SERVER,
+    # first go to src/frontend and run `pnpm install` and then `pnpm run dev`
+    run_mode="dev_components",
+    local_components_server="http://localhost:5173"
+).configure(app)
+
+
+def view(rl: RLBuilder) -> None:  # type: ignore[no-any-unimported]
+    rl.text("Hello World")
+    rl.hello("RouteLit")
+    rl.hello_world()
+
+
+@app.route("/", methods=["GET", "POST"])
+def index() -> Response:
+    return routelit_adapter.stream_response(view)  # type: ignore[no-any-return]
+
+
+if __name__ == "__main__":
+    app.run(debug=True)  # noqa: S201

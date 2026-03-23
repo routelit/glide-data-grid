@@ -1,0 +1,108 @@
+import React, { useCallback, useMemo } from "react";
+import {
+  DataEditor,
+  GridColumn,
+  GridCell,
+  Item,
+  GridSelection,
+} from "@glideapps/glide-data-grid";
+import { mapPythonToGlideCell } from "../utils/typeMapper";
+
+import "@glideapps/glide-data-grid/dist/index.css";
+
+interface GridDataGridProps {
+  data: any[];
+  columns: string[];
+  columnTypes: Record<string, string>;
+  height?: "auto" | "content" | "stretch" | number;
+  width?: "stretch" | "content" | number;
+  hideIndex?: boolean;
+  rowHeight?: number;
+  selectionMode?: string | string[];
+  columnConfig?: Record<string, any>;
+  placeholder?: string;
+  onSelect?: "ignore" | "rerun" | "callback";
+  // RouteLit injected props
+  routelit: {
+    sendEvent: (name: string, payload: any) => void;
+  };
+}
+
+export const GridDataGrid: React.FC<GridDataGridProps> = ({
+  data,
+  columns,
+  columnTypes,
+  height = "auto",
+  width = "stretch",
+  hideIndex = false,
+  rowHeight,
+  // selectionMode, // For future use
+  columnConfig,
+  // placeholder, // For future use
+  onSelect,
+  routelit,
+}) => {
+  const gridColumns = useMemo<GridColumn[]>(() => {
+    return columns.map((col) => ({
+      title: (columnConfig?.[col] as string) || col,
+      id: col,
+      width: 150, // Default width
+    }));
+  }, [columns, columnConfig]);
+
+  const getCellContent = useCallback(
+    (cell: Item): GridCell => {
+      const [col, row] = cell;
+      const dataRow = data[row];
+      const columnName = columns[col];
+      const value = dataRow[columnName];
+      const pythonType = columnTypes[columnName];
+
+      return mapPythonToGlideCell(value, pythonType);
+    },
+    [data, columns, columnTypes]
+  );
+
+  const onGridSelectionChange = useCallback(
+    (selection: GridSelection) => {
+      if (onSelect === "ignore") return;
+
+      const payload = {
+        rows: selection.rows.toArray(),
+        columns: selection.columns.toArray(),
+      };
+
+      routelit.sendEvent("select", payload);
+    },
+    [onSelect, routelit]
+  );
+
+  const gridHeight = useMemo(() => {
+    if (height === "auto") return 400; // Fixed default for auto in Phase 1
+    if (height === "stretch") return "100%";
+    return height;
+  }, [height]);
+
+  const gridWidth = useMemo(() => {
+    if (width === "stretch") return "100%";
+    return width;
+  }, [width]);
+
+  return (
+    <div style={{ height: gridHeight, width: gridWidth }}>
+      <DataEditor
+        width="100%"
+        height="100%"
+        columns={gridColumns}
+        rows={data.length}
+        getCellContent={getCellContent}
+        onGridSelectionChange={onGridSelectionChange}
+        rowHeight={rowHeight}
+        rowMarkers={!hideIndex ? "number" : "none"}
+        getCellsForSelection={true}
+      />
+    </div>
+  );
+};
+
+export default GridDataGrid;
