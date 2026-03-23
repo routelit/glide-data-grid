@@ -6,9 +6,11 @@ import {
   Item,
   GridSelection,
 } from "@glideapps/glide-data-grid";
+import { allCells } from "@glideapps/glide-data-grid-cells";
 import { mapPythonToGlideCell } from "../utils/typeMapper";
 
 import "@glideapps/glide-data-grid/dist/index.css";
+import "@glideapps/glide-data-grid-cells/dist/index.css";
 
 interface GridDataGridProps {
   data: any[];
@@ -57,10 +59,11 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
       const columnName = columns[col];
       const value = dataRow[columnName];
       const pythonType = columnTypes[columnName];
+      const config = columnConfig?.[columnName];
 
-      return mapPythonToGlideCell(value, pythonType);
+      return mapPythonToGlideCell(value, pythonType, config);
     },
-    [data, columns, columnTypes]
+    [data, columns, columnTypes, columnConfig]
   );
 
   const onGridSelectionChange = useCallback(
@@ -70,6 +73,7 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
       const payload = {
         rows: selection.rows.toArray(),
         columns: selection.columns.toArray(),
+        current: selection.current,
       };
 
       routelit.sendEvent("select", payload);
@@ -100,6 +104,7 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
         rowHeight={rowHeight}
         rowMarkers={!hideIndex ? "number" : "none"}
         getCellsForSelection={true}
+        customRenderers={allCells}
       />
     </div>
   );

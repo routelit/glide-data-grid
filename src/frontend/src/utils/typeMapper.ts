@@ -1,5 +1,5 @@
 import { GridCell, GridCellKind } from "@glideapps/glide-data-grid";
-import { DateCellRenderer, DatetimeCellRenderer } from "./customRenderers";
+import { DateCellRenderer, DatetimeCellRenderer, SelectCellRenderer, MultiselectCellRenderer } from "./customRenderers";
 
 export type PythonType = "str" | "int" | "float" | "bool" | "NoneType" | string;
 
@@ -65,19 +65,41 @@ export function mapPythonToGlideCell(
       case "DateColumn":
         return {
           ...DateCellRenderer,
+          kind: GridCellKind.Custom,
           data: {
             kind: "date-cell",
             value: String(value),
           },
-        };
+        } as any;
       case "DatetimeColumn":
         return {
           ...DatetimeCellRenderer,
+          kind: GridCellKind.Custom,
           data: {
             kind: "datetime-cell",
             value: String(value),
           },
-        };
+        } as any;
+      case "SelectboxColumn":
+        return {
+          ...SelectCellRenderer,
+          kind: GridCellKind.Custom,
+          data: {
+            kind: "select-cell",
+            value: String(value),
+            options: config.options || [],
+          },
+        } as any;
+      case "MultiselectColumn":
+        return {
+          ...MultiselectCellRenderer,
+          kind: GridCellKind.Custom,
+          data: {
+            kind: "multiselect-cell",
+            value: Array.isArray(value) ? value : [value],
+            options: config.options || [],
+          },
+        } as any;
     }
   }
 

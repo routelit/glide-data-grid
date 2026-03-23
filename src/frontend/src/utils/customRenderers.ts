@@ -1,7 +1,5 @@
-import { GridCell, GridCellKind, GridDataType } from "@glideapps/glide-data-grid";
-import { Theme } from "@glideapps/glide-data-grid";
+import { GridCellKind } from "@glideapps/glide-data-grid";
 
-// Placeholder for custom cell renderer for Date/Datetime
 export const DateCellRenderer = {
   kind: GridCellKind.Custom,
   allowOverlay: true,
@@ -20,6 +18,30 @@ export const DatetimeCellRenderer = {
   data: {
     kind: "datetime-cell",
     value: "",
+  },
+  copyData: "",
+};
+
+export const SelectCellRenderer = {
+  kind: GridCellKind.Custom,
+  allowOverlay: true,
+  readonly: false,
+  data: {
+    kind: "select-cell",
+    value: "",
+    options: [],
+  },
+  copyData: "",
+};
+
+export const MultiselectCellRenderer = {
+  kind: GridCellKind.Custom,
+  allowOverlay: true,
+  readonly: false,
+  data: {
+    kind: "multiselect-cell",
+    value: [],
+    options: [],
   },
   copyData: "",
 };
