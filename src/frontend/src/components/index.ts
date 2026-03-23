@@ -1,2 +1,3 @@
 export * from "./GridDataGrid";
-export const Hello = () => null; // Placeholder for initial Hello component if it existed
+export * from "./GridDataEditor";
+export const Hello = () => null;

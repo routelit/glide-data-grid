@@ -119,3 +119,16 @@ class TestRLBuilder:
         assert len(elements) == 1
         assert elements[0].name == "grid_data_grid"
         assert elements[0].props["data"] == data
+
+    def test_data_editor_basic(self, builder: RLBuilder) -> None:
+        data = {"col1": [1, 2], "col2": ["a", "b"]}
+        builder.data_editor(data, num_rows="dynamic")
+
+        elements = builder.elements
+        assert len(elements) == 1
+        assert elements[0].name == "grid_data_editor"
+        assert elements[0].props["data"] == [
+            {"col1": 1, "col2": "a"},
+            {"col1": 2, "col2": "b"},
+        ]
+        assert elements[0].props["numRows"] == "dynamic"

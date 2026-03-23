@@ -1,0 +1,162 @@
+import React, { useCallback, useMemo, useState, useEffect } from "react";
+import {
+  DataEditor,
+  GridColumn,
+  GridCell,
+  Item,
+} from "@glideapps/glide-data-grid";
+import { mapPythonToGlideCell } from "../utils/typeMapper";
+
+import "@glideapps/glide-data-grid/dist/index.css";
+
+interface GridDataEditorProps {
+  data: any[];
+  columns: string[];
+  columnTypes: Record<string, string>;
+  height?: "auto" | "content" | "stretch" | number;
+  width?: "stretch" | "content" | number;
+  hideIndex?: boolean;
+  rowHeight?: number;
+  numRows?: "fixed" | "dynamic" | "add" | "delete";
+  disabled?: boolean | (string | number)[];
+  columnConfig?: Record<string, any>;
+  placeholder?: string;
+  onChange?: "ignore" | "rerun" | "callback";
+  // RouteLit injected props
+  routelit: {
+    sendEvent: (name: string, payload: any) => void;
+  };
+}
+
+export const GridDataEditor: React.FC<GridDataEditorProps> = ({
+  data: initialData,
+  columns,
+  columnTypes,
+  height = "auto",
+  width = "stretch",
+  hideIndex = false,
+  rowHeight,
+  numRows = "fixed",
+  disabled = false,
+  columnConfig,
+  onChange,
+  routelit,
+}) => {
+  const [localData, setLocalData] = useState(initialData);
+
+  useEffect(() => {
+    setLocalData(initialData);
+  }, [initialData]);
+
+  const gridColumns = useMemo<GridColumn[]>(() => {
+    return columns.map((col) => ({
+      title: (columnConfig?.[col] as string) || col,
+      id: col,
+      width: 150,
+    }));
+  }, [columns, columnConfig]);
+
+  const getCellContent = useCallback(
+    (cell: Item): GridCell => {
+      const [col, row] = cell;
+      const dataRow = localData[row];
+      const columnName = columns[col];
+      const value = dataRow ? dataRow[columnName] : undefined;
+      const pythonType = columnTypes[columnName];
+
+      const glideCell = mapPythonToGlideCell(value, pythonType);
+      
+      // Determine if cell is disabled
+      let isCellDisabled = false;
+      if (disabled === true) {
+        isCellDisabled = true;
+      } else if (Array.isArray(disabled)) {
+        isCellDisabled = disabled.includes(columnName) || disabled.includes(col);
+      }
+
+      return {
+        ...glideCell,
+        readonly: isCellDisabled,
+      } as any;
+    },
+    [localData, columns, columnTypes, disabled]
+  );
+
+  const onCellEdited = useCallback(
+    (cell: Item, newValue: GridCell) => {
+      const [col, row] = cell;
+      const columnName = columns[col];
+      
+      const newData = [...localData];
+      const newRow = { ...newData[row] };
+
+      // Simplified type coercion based on Python types
+      const pythonType = columnTypes[columnName];
+      let value: any = (newValue as any).data;
+
+      if (pythonType === "int") value = parseInt(value);
+      if (pythonType === "float") value = parseFloat(value);
+      if (pythonType === "bool") value = Boolean(value);
+
+      newRow[columnName] = value;
+      newData[row] = newRow;
+
+      setLocalData(newData);
+
+      if (onChange !== "ignore") {
+        routelit.sendEvent("change", { data: newData });
+      }
+    },
+    [localData, columns, columnTypes, onChange, routelit]
+  );
+
+  const onRowAppended = useCallback(() => {
+    const newRow: Record<string, any> = {};
+    columns.forEach((col) => {
+      const type = columnTypes[col];
+      if (type === "int" || type === "float") newRow[col] = 0;
+      else if (type === "bool") newRow[col] = false;
+      else newRow[col] = "";
+    });
+
+    const newData = [...localData, newRow];
+    setLocalData(newData);
+
+    if (onChange !== "ignore") {
+      routelit.sendEvent("change", { data: newData });
+    }
+  }, [localData, columns, columnTypes, onChange, routelit]);
+
+  const gridHeight = useMemo(() => {
+    if (height === "auto") return 400;
+    if (height === "stretch") return "100%";
+    return height;
+  }, [height]);
+
+  const gridWidth = useMemo(() => {
+    if (width === "stretch") return "100%";
+    return width;
+  }, [width]);
+
+  return (
+    <div style={{ height: gridHeight, width: gridWidth }}>
+      <DataEditor
+        width="100%"
+        height="100%"
+        columns={gridColumns}
+        rows={localData.length}
+        getCellContent={getCellContent}
+        onCellEdited={onCellEdited}
+        onRowAppended={(numRows === "dynamic" || numRows === "add") ? onRowAppended : undefined}
+        rowHeight={rowHeight}
+        rowMarkers={!hideIndex ? "number" : "none"}
+        getCellsForSelection={true}
+        trailingRowOptions={{
+          hint: "Add row",
+        }}
+      />
+    </div>
+  );
+};
+
+export default GridDataEditor;

@@ -85,3 +85,78 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
             props=props,
             key=element_key
         )
+
+    def data_editor(
+        self,
+        data: Union[pd.DataFrame, dict, list],
+        *,
+        height: Union[Literal["auto", "content", "stretch"], int] = "auto",
+        width: Union[Literal["stretch", "content"], int] = "stretch",
+        hide_index: Optional[bool] = None,
+        row_height: Optional[int] = None,
+        num_rows: Literal["fixed", "dynamic", "add", "delete"] = "fixed",
+        disabled: Union[bool, Iterable[Union[str, int]]] = False,
+        on_change: Optional[Callable[[Union[pd.DataFrame, dict, list]], None]] = None,
+        column_config: Optional[dict[str, Any]] = None,
+        column_order: Optional[Iterable[str]] = None,
+        placeholder: Optional[str] = None,
+        key: Optional[str] = None,
+    ) -> Any:
+        """
+        Display an editable data grid with optional dynamic row management.
+        """
+        normalized = normalize_data(data)
+        all_columns = extract_columns(normalized)
+        
+        # Filter and order columns if column_order is provided
+        if column_order:
+            display_columns = [col for col in column_order if col in all_columns]
+        else:
+            display_columns = all_columns
+            
+        # Infer types for display columns
+        column_types = infer_column_types(normalized, display_columns)
+        
+        props = {
+            "data": normalized,
+            "columns": display_columns,
+            "columnTypes": column_types,
+            "height": height,
+            "width": width,
+            "hideIndex": hide_index,
+            "rowHeight": row_height,
+            "numRows": num_rows,
+            "disabled": disabled,
+            "columnConfig": column_config,
+            "placeholder": placeholder,
+        }
+        
+        element_key = key or self._new_text_id("grid_data_editor")
+        
+        # Handle on_change callback
+        if on_change:
+            def change_callback(payload: dict) -> None:
+                # payload['data'] should contain the updated data
+                updated_data = payload.get("data")
+                if updated_data is not None:
+                    # Convert back to input type if needed
+                    if isinstance(data, pd.DataFrame):
+                        res = pd.DataFrame(updated_data)
+                    elif isinstance(data, dict):
+                        # Convert row-major list of dicts back to column-major dict
+                        if not updated_data:
+                            res = {}
+                        else:
+                            res = {k: [row[k] for row in updated_data] for k in updated_data[0].keys()}
+                    else:
+                        res = updated_data
+                    on_change(res)
+            
+            # self._register_callback(element_key, change_callback)
+            props["onChange"] = "callback"
+            
+        return self._create_element(
+            name="grid_data_editor",
+            props=props,
+            key=element_key
+        )

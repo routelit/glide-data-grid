@@ -4,11 +4,13 @@ Integration test for RouteLit Glide Data Grid.
 
 import pandas as pd
 from flask import Flask
+from routelit import RouteLit
 from routelit_flask import RouteLitFlaskAdapter
 from routelit_glide_data_grid.builder import RLBuilder
 
 app = Flask(__name__)
-adapter = RouteLitFlaskAdapter(app)
+routelit = RouteLit(RLBuilder)
+adapter = RouteLitFlaskAdapter(routelit).configure(app)
 
 # Test data
 test_data = pd.DataFrame({
@@ -18,7 +20,6 @@ test_data = pd.DataFrame({
     "active": [True, False, True, True],
 })
 
-@adapter.route("/")
 def test_page(ui: RLBuilder):
     ui.title("🧪 RouteLit Glide Data Grid Integration Test")
     
@@ -36,9 +37,21 @@ def test_page(ui: RLBuilder):
         ui.info("Select rows in the grid above")
     
     ui.divider()
+
+    # Test 2: Data Editor (Editable)
+    ui.subheader("2. Data Editor (Editable)")
+    edited_data = ui.data_editor(
+        test_data,
+        key="test-editor",
+        num_rows="dynamic"
+    )
+    ui.text("Current data in editor:")
+    ui.json(edited_data)
     
-    # Test 2: Multi-type data
-    ui.subheader("2. Multi-type data")
+    ui.divider()
+    
+    # Test 3: Multi-type data
+    ui.subheader("3. Multi-type data")
     ui.data_grid(
         {
             "Text": ["A", "B", "C"],
@@ -52,6 +65,10 @@ def test_page(ui: RLBuilder):
     
     ui.subheader("✅ All Tests Passed!")
     ui.text("If you can see the grid with data rendered correctly, the integration is working.")
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+    return adapter.response(test_page)
 
 if __name__ == "__main__":
     print("=" * 60)
