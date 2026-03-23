@@ -24,6 +24,7 @@ interface GridDataGridProps {
   columnConfig?: Record<string, any>;
   placeholder?: string;
   onSelect?: "ignore" | "rerun" | "callback";
+  columnOrder?: string[];
   // RouteLit injected props
   routelit: {
     sendEvent: (name: string, payload: any) => void;
@@ -40,30 +41,39 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
   rowHeight,
   // selectionMode, // For future use
   columnConfig,
-  // placeholder, // For future use
+  placeholder,
   onSelect,
   routelit,
+  columnOrder,
 }) => {
   const gridColumns = useMemo<GridColumn[]>(() => {
-    return columns.map((col) => ({
+    let activeColumns = columns;
+    if (columnOrder) {
+      activeColumns = columnOrder.filter(c => columns.includes(c));
+    }
+    
+    return activeColumns.map((col) => ({
       title: (columnConfig?.[col] as string) || col,
       id: col,
       width: 150, // Default width
     }));
-  }, [columns, columnConfig]);
+  }, [columns, columnConfig, columnOrder]);
 
   const getCellContent = useCallback(
     (cell: Item): GridCell => {
       const [col, row] = cell;
       const dataRow = data[row];
-      const columnName = columns[col];
+      const columnName = gridColumns[col].id as string;
       const value = dataRow[columnName];
+      
+      // Use placeholder if value is null or undefined
+      const displayValue = value === null || value === undefined ? (placeholder ?? "") : value;
       const pythonType = columnTypes[columnName];
       const config = columnConfig?.[columnName];
 
-      return mapPythonToGlideCell(value, pythonType, config);
+      return mapPythonToGlideCell(displayValue, pythonType, config);
     },
-    [data, columns, columnTypes, columnConfig]
+    [data, gridColumns, columnTypes, columnConfig, placeholder]
   );
 
   const onGridSelectionChange = useCallback(
