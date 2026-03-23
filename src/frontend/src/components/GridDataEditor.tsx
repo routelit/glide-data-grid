@@ -5,9 +5,11 @@ import {
   GridCell,
   Item,
 } from "@glideapps/glide-data-grid";
+import { allCells } from "@glideapps/glide-data-grid-cells";
 import { mapPythonToGlideCell } from "../utils/typeMapper";
 
 import "@glideapps/glide-data-grid/dist/index.css";
+import "@glideapps/glide-data-grid-cells/dist/index.css";
 
 interface GridDataEditorProps {
   data: any[];
@@ -63,8 +65,9 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = ({
       const columnName = columns[col];
       const value = dataRow ? dataRow[columnName] : undefined;
       const pythonType = columnTypes[columnName];
+      const config = columnConfig?.[columnName];
 
-      const glideCell = mapPythonToGlideCell(value, pythonType);
+      const glideCell = mapPythonToGlideCell(value, pythonType, config);
       
       // Determine if cell is disabled
       let isCellDisabled = false;
@@ -76,10 +79,10 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = ({
 
       return {
         ...glideCell,
-        readonly: isCellDisabled,
+        readonly: isCellDisabled || (glideCell as any).readonly,
       } as any;
     },
-    [localData, columns, columnTypes, disabled]
+    [localData, columns, columnTypes, disabled, columnConfig]
   );
 
   const onCellEdited = useCallback(
@@ -87,16 +90,31 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = ({
       const [col, row] = cell;
       const columnName = columns[col];
       
-      const newData = [...localData];
-      const newRow = { ...newData[row] };
-
-      // Simplified type coercion based on Python types
-      const pythonType = columnTypes[columnName];
+      // Perform validation based on column config
+      const config = columnConfig?.[columnName];
       let value: any = (newValue as any).data;
 
-      if (pythonType === "int") value = parseInt(value);
-      if (pythonType === "float") value = parseFloat(value);
-      if (pythonType === "bool") value = Boolean(value);
+      // Basic type validation
+      const pythonType = columnTypes[columnName];
+      if (pythonType === "int") {
+        const num = parseInt(value);
+        if (isNaN(num)) return; // Reject edit
+        value = num;
+      } else if (pythonType === "float") {
+        const num = parseFloat(value);
+        if (isNaN(num)) return; // Reject edit
+        value = num;
+      }
+
+      // ColumnConfig validation
+      if (config) {
+        if (config.min_value !== undefined && value < config.min_value) return;
+        if (config.max_value !== undefined && value > config.max_value) return;
+        if (config.max_chars !== undefined && String(value).length > config.max_chars) return;
+      }
+
+      const newData = [...localData];
+      const newRow = { ...newData[row] };
 
       newRow[columnName] = value;
       newData[row] = newRow;
@@ -107,7 +125,7 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = ({
         routelit.sendEvent("change", { data: newData });
       }
     },
-    [localData, columns, columnTypes, onChange, routelit]
+    [localData, columns, columnTypes, columnConfig, onChange, routelit]
   );
 
   const onRowAppended = useCallback(() => {
@@ -151,6 +169,7 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = ({
         rowHeight={rowHeight}
         rowMarkers={!hideIndex ? "number" : "none"}
         getCellsForSelection={true}
+        customRenderers={allCells}
         trailingRowOptions={{
           hint: "Add row",
         }}
