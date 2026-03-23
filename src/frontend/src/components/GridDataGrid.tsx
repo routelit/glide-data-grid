@@ -25,6 +25,8 @@ interface GridDataGridProps {
   placeholder?: string;
   onSelect?: "ignore" | "rerun" | "callback";
   columnOrder?: string[];
+  frozenRows?: number;
+  frozenColumns?: number;
   // RouteLit injected props
   routelit: {
     sendEvent: (name: string, payload: any) => void;
@@ -45,6 +47,8 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
   onSelect,
   routelit,
   columnOrder,
+  frozenRows = 0,
+  frozenColumns = 0,
 }) => {
   const gridColumns = useMemo<GridColumn[]>(() => {
     let activeColumns = columns;
