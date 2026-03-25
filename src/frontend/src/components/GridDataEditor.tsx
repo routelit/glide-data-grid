@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo, useState, useEffect, memo } from "react";
 import {
   DataEditor,
-  GridColumn,
   GridCell,
   Item,
 } from "@glideapps/glide-data-grid";
 import { allCells } from "@glideapps/glide-data-grid-cells";
 import { mapPythonToGlideCell } from "../utils/typeMapper";
+import { useDispatcherWith } from "routelit-client";
+import { useGridColumns } from "../hooks/useGridColumns";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 import "@glideapps/glide-data-grid-cells/dist/index.css";
@@ -24,10 +25,8 @@ interface GridDataEditorProps {
   columnConfig?: Record<string, any>;
   placeholder?: string;
   onChange?: "ignore" | "rerun" | "callback";
-  // RouteLit injected props
-  routelit: {
-    sendEvent: (name: string, payload: any) => void;
-  };
+  columnOrder?: string[];
+  id: string;
 }
 
 export const GridDataEditor: React.FC<GridDataEditorProps> = memo(({
@@ -42,27 +41,24 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = memo(({
   disabled = false,
   columnConfig,
   onChange,
-  routelit,
+  columnOrder,
+  id,
 }) => {
+  const sendEvent = useDispatcherWith(id, "change");
+
   const [localData, setLocalData] = useState(initialData);
 
   useEffect(() => {
     setLocalData(initialData);
   }, [initialData]);
 
-  const gridColumns = useMemo<GridColumn[]>(() => {
-    return columns.map((col) => ({
-      title: (columnConfig?.[col] as string) || col,
-      id: col,
-      width: 150,
-    }));
-  }, [columns, columnConfig]);
+  const gridColumns = useGridColumns(columns, columnConfig, columnOrder);
 
   const getCellContent = useCallback(
     (cell: Item): GridCell => {
       const [col, row] = cell;
       const dataRow = localData[row];
-      const columnName = columns[col];
+      const columnName = gridColumns[col].id as string;
       const value = dataRow ? dataRow[columnName] : undefined;
       const pythonType = columnTypes[columnName];
       const config = columnConfig?.[columnName];
@@ -71,7 +67,12 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = memo(({
       
       // Determine if cell is disabled
       let isCellDisabled = false;
-      if (disabled === true) {
+      const colConfig = columnConfig?.[columnName];
+      
+      // Respect column-level disabled configuration
+      if (colConfig && colConfig.disabled === true) {
+        isCellDisabled = true;
+      } else if (disabled === true) {
         isCellDisabled = true;
       } else if (Array.isArray(disabled)) {
         isCellDisabled = disabled.includes(columnName) || disabled.includes(col);
@@ -82,13 +83,13 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = memo(({
         readonly: isCellDisabled || (glideCell as any).readonly,
       } as any;
     },
-    [localData, columns, columnTypes, disabled, columnConfig]
+    [localData, gridColumns, columnTypes, disabled, columnConfig]
   );
 
   const onCellEdited = useCallback(
     (cell: Item, newValue: GridCell) => {
       const [col, row] = cell;
-      const columnName = columns[col];
+      const columnName = gridColumns[col].id as string;
       
       // Perform validation based on column config
       const config = columnConfig?.[columnName];
@@ -122,10 +123,10 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = memo(({
       setLocalData(newData);
 
       if (onChange !== "ignore") {
-        routelit.sendEvent("change", { data: newData });
+        sendEvent({ data: newData });
       }
     },
-    [localData, columns, columnTypes, columnConfig, onChange, routelit]
+    [localData, gridColumns, columnTypes, columnConfig, onChange, sendEvent]
   );
 
   const onRowAppended = useCallback(() => {
@@ -141,9 +142,9 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = memo(({
     setLocalData(newData);
 
     if (onChange !== "ignore") {
-      routelit.sendEvent("change", { data: newData });
+      sendEvent({ data: newData });
     }
-  }, [localData, columns, columnTypes, onChange, routelit]);
+  }, [localData, columns, columnTypes, onChange, sendEvent]);
 
   const gridHeight = useMemo(() => {
     if (height === "auto") return 400;
