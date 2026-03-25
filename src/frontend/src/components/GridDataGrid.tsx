@@ -1,13 +1,15 @@
 import React, { useCallback, useMemo } from "react";
 import {
   DataEditor,
-  GridColumn,
   GridCell,
   Item,
   GridSelection,
+  Theme,
 } from "@glideapps/glide-data-grid";
 import { allCells } from "@glideapps/glide-data-grid-cells";
 import { mapPythonToGlideCell } from "../utils/typeMapper";
+import { useGridColumns } from "../hooks/useGridColumns";
+import { useDispatcherWith } from "routelit-client";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 import "@glideapps/glide-data-grid-cells/dist/index.css";
@@ -25,12 +27,11 @@ interface GridDataGridProps {
   placeholder?: string;
   onSelect?: "ignore" | "rerun" | "callback";
   columnOrder?: string[];
+  search?: string;
+  theme?: Theme;
   frozenRows?: number;
   frozenColumns?: number;
-  // RouteLit injected props
-  routelit: {
-    sendEvent: (name: string, payload: any) => void;
-  };
+  id: string;
 }
 
 export const GridDataGrid: React.FC<GridDataGridProps> = ({
@@ -45,28 +46,29 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
   columnConfig,
   placeholder,
   onSelect,
-  routelit,
   columnOrder,
-  frozenRows = 0,
-  frozenColumns = 0,
+  search,
+  theme,
+  id,
 }) => {
-  const gridColumns = useMemo<GridColumn[]>(() => {
-    let activeColumns = columns;
-    if (columnOrder) {
-      activeColumns = columnOrder.filter(c => columns.includes(c));
-    }
-    
-    return activeColumns.map((col) => ({
-      title: (columnConfig?.[col] as string) || col,
-      id: col,
-      width: 150, // Default width
-    }));
-  }, [columns, columnConfig, columnOrder]);
+  const sendEvent = useDispatcherWith(id, "select");
+
+  const filteredData = useMemo(() => {
+    if (!search) return data;
+    const lowerSearch = search.toLowerCase();
+    return data.filter((row) =>
+      columns.some((col) =>
+        String(row[col]).toLowerCase().includes(lowerSearch),
+      ),
+    );
+  }, [data, columns, search]);
+
+  const gridColumns = useGridColumns(columns, columnConfig, columnOrder);
 
   const getCellContent = useCallback(
     (cell: Item): GridCell => {
       const [col, row] = cell;
-      const dataRow = data[row];
+      const dataRow = filteredData[row];
       const columnName = gridColumns[col].id as string;
       const value = dataRow[columnName];
       
@@ -77,7 +79,7 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
 
       return mapPythonToGlideCell(displayValue, pythonType, config);
     },
-    [data, gridColumns, columnTypes, columnConfig, placeholder]
+    [filteredData, gridColumns, columnTypes, columnConfig, placeholder],
   );
 
   const onGridSelectionChange = useCallback(
@@ -90,9 +92,9 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
         current: selection.current,
       };
 
-      routelit.sendEvent("select", payload);
+      sendEvent(payload);
     },
-    [onSelect, routelit]
+    [onSelect, sendEvent],
   );
 
   const gridHeight = useMemo(() => {
@@ -112,13 +114,14 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
         width="100%"
         height="100%"
         columns={gridColumns}
-        rows={data.length}
+        rows={filteredData.length}
         getCellContent={getCellContent}
         onGridSelectionChange={onGridSelectionChange}
         rowHeight={rowHeight}
         rowMarkers={!hideIndex ? "number" : "none"}
         getCellsForSelection={true}
         customRenderers={allCells}
+        theme={theme}
       />
     </div>
   );
