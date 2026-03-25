@@ -5,10 +5,11 @@ from dataclasses import dataclass, asdict, field
 class ColumnConfig:
     """Base class for column configuration."""
     label: Optional[str] = None
-    width: Optional[int] = None
+    width: Optional[Union[int, Literal["small", "medium", "large"]]] = None
     help: Optional[str] = None
     hidden: bool = False
     required: bool = False
+    disabled: bool = False
     
     def to_dict(self) -> Dict[str, Any]:
         return {k: v for k, v in asdict(self).items() if v is not None}
@@ -66,4 +67,14 @@ class LinkColumn(ColumnConfig):
 @dataclass
 class ImageColumn(ColumnConfig):
     """Configuration for image columns."""
+    pass
+
+@dataclass
+class JsonColumn(ColumnConfig):
+    """Configuration for JSON columns."""
+    pass
+
+@dataclass
+class SparklineColumn(ColumnConfig):
+    """Configuration for sparkline columns."""
     pass
