@@ -49,6 +49,7 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
         column_config: Optional[dict[str, Union[ColumnConfig, str, None]]] = None,
         column_order: Optional[Iterable[str]] = None,
         placeholder: Optional[str] = None,
+        search: Optional[str] = None,
         theme: Optional[dict[str, Any]] = None,
         key: Optional[str] = None,
     ) -> Any:
@@ -67,6 +68,8 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
         # Infer types for display columns
         column_types = infer_column_types(normalized, display_columns)
         
+        element_key = key or self._new_text_id("grid_data_grid")
+        
         props = {
             "data": normalized,
             "columns": display_columns,
@@ -78,20 +81,13 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
             "selectionMode": selection_mode,
             "columnConfig": self._serialize_column_config(column_config),
             "placeholder": placeholder,
+            "search": search,
             "theme": theme,
+            "id": element_key,
         }
         
         # Handle callbacks and return values
-        element_key = key or self._new_text_id("grid_data_grid")
-        
         if callable(on_select):
-            # Register callback
-            def selection_callback(payload: dict) -> None:
-                on_select(payload)
-            
-            # Use RouteLit's callback system (assuming it exists in RouteLitBuilder)
-            # This is a placeholder for actual callback registration logic
-            # self._register_callback(element_key, selection_callback)
             props["onSelect"] = "callback"
         elif on_select == "rerun":
             props["onSelect"] = "rerun"
@@ -136,6 +132,8 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
         # Infer types for display columns
         column_types = infer_column_types(normalized, display_columns)
         
+        element_key = key or self._new_text_id("grid_data_editor")
+
         props = {
             "data": normalized,
             "columns": display_columns,
@@ -149,30 +147,11 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
             "columnConfig": self._serialize_column_config(column_config),
             "placeholder": placeholder,
             "theme": theme,
+            "id": element_key,
         }
-        
-        element_key = key or self._new_text_id("grid_data_editor")
         
         # Handle on_change callback
         if on_change:
-            def change_callback(payload: dict) -> None:
-                # payload['data'] should contain the updated data
-                updated_data = payload.get("data")
-                if updated_data is not None:
-                    # Convert back to input type if needed
-                    if isinstance(data, pd.DataFrame):
-                        res = pd.DataFrame(updated_data)
-                    elif isinstance(data, dict):
-                        # Convert row-major list of dicts back to column-major dict
-                        if not updated_data:
-                            res = {}
-                        else:
-                            res = {k: [row[k] for row in updated_data] for k in updated_data[0].keys()}
-                    else:
-                        res = updated_data
-                    on_change(res)
-            
-            # self._register_callback(element_key, change_callback)
             props["onChange"] = "callback"
             
         return self._create_element(
