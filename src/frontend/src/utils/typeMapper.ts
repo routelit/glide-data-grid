@@ -1,12 +1,9 @@
-import { GridCell, GridCellKind } from "@glideapps/glide-data-grid";
-import { 
-  DateCellRenderer, 
-  DatetimeCellRenderer, 
-  SelectCellRenderer, 
-  MultiselectCellRenderer,
-  ImageCellRenderer,
-  JsonCellRenderer,
-} from "./customRenderers";
+import {
+  GridCell,
+  GridCellKind,
+  NumberCell,
+  ProtectedCell,
+} from "@glideapps/glide-data-grid";
 
 export type PythonType = "str" | "int" | "float" | "bool" | "NoneType" | string;
 
@@ -29,9 +26,9 @@ export interface ColumnConfig {
 }
 
 export function mapPythonToGlideCell(
-  value: any,
+  value: unknown,
   pythonType: PythonType,
-  config?: ColumnConfig
+  config?: ColumnConfig,
 ): GridCell {
   if (value === null || value === undefined || pythonType === "NoneType") {
     return {
@@ -43,80 +40,93 @@ export function mapPythonToGlideCell(
     };
   }
 
-  // Handle specific ColumnConfig types
+  // Handle specific ColumnConfig types by mapping them to best-fit standard Glide cell kinds
   if (config?.type) {
     switch (config.type) {
       case "NumberColumn":
         return {
           kind: GridCellKind.Number,
           allowOverlay: true,
-          readonly: false,
+          // readonly: false,
           data: Number(value),
           displayData: String(value),
-        };
+        } as NumberCell;
       case "CheckboxColumn":
         return {
           kind: GridCellKind.Boolean,
           allowOverlay: false,
-          readonly: false,
+          // readonly: false,
           data: Boolean(value),
         };
       case "ImageColumn":
         return {
-          ...ImageCellRenderer,
-          kind: GridCellKind.Custom,
-          data: {
-            kind: "image-cell",
-            url: String(value),
-          },
-        } as any;
+          kind: GridCellKind.Image,
+          allowOverlay: true,
+          data: Array.isArray(value) ? value : [value], // Assuming value is a URL or base64 string
+        };
       case "JsonColumn":
         return {
-          ...JsonCellRenderer,
-          kind: GridCellKind.Custom,
-          data: {
-            kind: "json-cell",
-            value: typeof value === "string" ? JSON.parse(value) : value,
-          },
-        } as any;
+          kind: GridCellKind.Text,
+          allowOverlay: true,
+          displayData:
+            typeof value === "string" ? value : JSON.stringify(value),
+          data: typeof value === "string" ? value : JSON.stringify(value),
+        };
       case "DateColumn":
-        return {
-          ...DateCellRenderer,
-          kind: GridCellKind.Custom,
-          data: {
-            kind: "date-cell",
-            value: String(value),
-          },
-        } as any;
       case "DatetimeColumn":
         return {
-          ...DatetimeCellRenderer,
-          kind: GridCellKind.Custom,
-          data: {
-            kind: "datetime-cell",
-            value: String(value),
-          },
-        } as any;
+          kind: GridCellKind.Text,
+          allowOverlay: true,
+          displayData: String(value),
+          data: String(value),
+        };
       case "SelectboxColumn":
         return {
-          ...SelectCellRenderer,
-          kind: GridCellKind.Custom,
-          data: {
-            kind: "select-cell",
-            value: String(value),
-            options: config.options || [],
-          },
-        } as any;
+          kind: GridCellKind.Drilldown,
+          allowOverlay: true,
+          // readonly: false,
+          // displayData: Array.isArray(value) ? value.join(", ") : String(value),
+          data: Array.isArray(value)
+            ? (value as unknown[])?.map((v) => ({
+                text: String(v),
+              }))
+            : [{ text: String(value) }],
+        };
       case "MultiselectColumn":
         return {
-          ...MultiselectCellRenderer,
-          kind: GridCellKind.Custom,
-          data: {
-            kind: "multiselect-cell",
-            value: Array.isArray(value) ? value : [value],
-            options: config.options || [],
-          },
-        } as any;
+          kind: GridCellKind.Bubble,
+          allowOverlay: true,
+          // readonly: false,
+          // displayData: Array.isArray(value) ? value.join(", ") : String(value),
+          data: Array.isArray(value) ? value : [String(value)],
+        };
+      case "LinkColumn":
+        return {
+          kind: GridCellKind.Uri,
+          allowOverlay: true,
+          // readonly: false,
+          data: String(value),
+          displayData: config.display_text || String(value),
+        };
+      case "ProtectedColumn":
+        return {
+          kind: GridCellKind.Protected,
+          allowOverlay: false,
+        } as ProtectedCell;
+      case "IDColumn":
+        return {
+          kind: GridCellKind.RowID,
+          allowOverlay: false,
+          readonly: true, // ID columns are typically read-only
+          data: String(value),
+        };
+      case "MarkdownColumn":
+        return {
+          kind: GridCellKind.Markdown,
+          allowOverlay: true,
+          // readonly: false,
+          data: String(value),
+        };
     }
   }
 
