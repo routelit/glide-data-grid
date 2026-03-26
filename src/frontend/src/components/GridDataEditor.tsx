@@ -3,14 +3,22 @@ import {
   DataEditor,
   GridCell,
   Item,
+  GridSelection,
 } from "@glideapps/glide-data-grid";
 import { allCells } from "@glideapps/glide-data-grid-cells";
-import { mapPythonToGlideCell } from "../utils/typeMapper";
+import { mapPythonToGlideCell, ColumnConfig } from "../utils/typeMapper";
 import { useDispatcherWith } from "routelit-client";
 import { useGridColumns } from "../hooks/useGridColumns";
+import { createGridSelection } from "../utils/selectionUtils";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 import "@glideapps/glide-data-grid-cells/dist/index.css";
+
+interface PythonSelection {
+  rows?: number[];
+  columns?: number[];
+  current?: any;
+}
 
 interface GridDataEditorProps {
   data: any[];
@@ -22,10 +30,11 @@ interface GridDataEditorProps {
   rowHeight?: number;
   numRows?: "fixed" | "dynamic" | "add" | "delete";
   disabled?: boolean | (string | number)[];
-  columnConfig?: Record<string, any>;
+  columnConfig?: Record<string, ColumnConfig>;
   placeholder?: string;
   onChange?: "ignore" | "rerun" | "callback";
   columnOrder?: string[];
+  selection?: PythonSelection;
   id: string;
 }
 
@@ -42,9 +51,21 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = memo(({
   columnConfig,
   onChange,
   columnOrder,
+  selection: initialSelection,
   id,
 }) => {
   const sendEvent = useDispatcherWith(id, "change");
+
+  const [gridSelection, setGridSelection] = useState<GridSelection>(() => 
+    createGridSelection(initialSelection)
+  );
+
+  useEffect(() => {
+    if (initialSelection) {
+      setLocalData(initialData);
+      setGridSelection(createGridSelection(initialSelection));
+    }
+  }, [initialSelection, initialData]);
 
   const [localData, setLocalData] = useState(initialData);
 
@@ -80,8 +101,8 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = memo(({
 
       return {
         ...glideCell,
-        readonly: isCellDisabled || (glideCell as any).readonly,
-      } as any;
+        readonly: isCellDisabled || (glideCell as any).readonly || false,
+      } as GridCell;
     },
     [localData, gridColumns, columnTypes, disabled, columnConfig]
   );
@@ -98,11 +119,11 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = memo(({
       // Basic type validation
       const pythonType = columnTypes[columnName];
       if (pythonType === "int") {
-        const num = parseInt(value);
+        const num = typeof value === "string" ? parseInt(value) : Number(value);
         if (isNaN(num)) return; // Reject edit
         value = num;
       } else if (pythonType === "float") {
-        const num = parseFloat(value);
+        const num = typeof value === "string" ? parseFloat(value) : Number(value);
         if (isNaN(num)) return; // Reject edit
         value = num;
       }
@@ -167,6 +188,8 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = memo(({
         getCellContent={getCellContent}
         onCellEdited={onCellEdited}
         onRowAppended={(numRows === "dynamic" || numRows === "add") ? onRowAppended : undefined}
+        gridSelection={gridSelection}
+        onGridSelectionChange={setGridSelection}
         rowHeight={rowHeight}
         rowMarkers={!hideIndex ? "number" : "none"}
         getCellsForSelection={true}

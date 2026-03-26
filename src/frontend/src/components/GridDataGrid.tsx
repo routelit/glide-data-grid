@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import {
   DataEditor,
   GridCell,
@@ -7,12 +7,19 @@ import {
   Theme,
 } from "@glideapps/glide-data-grid";
 import { allCells } from "@glideapps/glide-data-grid-cells";
-import { mapPythonToGlideCell } from "../utils/typeMapper";
+import { mapPythonToGlideCell, ColumnConfig } from "../utils/typeMapper";
 import { useGridColumns } from "../hooks/useGridColumns";
 import { useDispatcherWith } from "routelit-client";
+import { createGridSelection } from "../utils/selectionUtils";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 import "@glideapps/glide-data-grid-cells/dist/index.css";
+
+interface PythonSelection {
+  rows?: number[];
+  columns?: number[];
+  current?: any;
+}
 
 interface GridDataGridProps {
   data: any[];
@@ -23,7 +30,7 @@ interface GridDataGridProps {
   hideIndex?: boolean;
   rowHeight?: number;
   selectionMode?: string | string[];
-  columnConfig?: Record<string, any>;
+  columnConfig?: Record<string, ColumnConfig>;
   placeholder?: string;
   onSelect?: "ignore" | "rerun" | "callback";
   columnOrder?: string[];
@@ -31,6 +38,7 @@ interface GridDataGridProps {
   theme?: Theme;
   frozenRows?: number;
   frozenColumns?: number;
+  selection?: PythonSelection;
   id: string;
 }
 
@@ -42,16 +50,28 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
   width = "stretch",
   hideIndex = false,
   rowHeight,
-  // selectionMode, // For future use
+  selectionMode,
   columnConfig,
   placeholder,
   onSelect,
   columnOrder,
   search,
   theme,
+  selection: initialSelection,
   id,
 }) => {
   const sendEvent = useDispatcherWith(id, "select");
+
+  const [gridSelection, setGridSelection] = useState<GridSelection>(() => 
+    createGridSelection(initialSelection)
+  );
+
+  // Sync with backend selection if provided
+  useEffect(() => {
+    if (initialSelection) {
+      setGridSelection(createGridSelection(initialSelection));
+    }
+  }, [initialSelection]);
 
   const filteredData = useMemo(() => {
     if (!search) return data;
@@ -77,25 +97,38 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
       const pythonType = columnTypes[columnName];
       const config = columnConfig?.[columnName];
 
-      return mapPythonToGlideCell(displayValue, pythonType, config);
+      const glideCell = mapPythonToGlideCell(displayValue, pythonType, config);
+      return {
+        ...glideCell,
+        readonly: true,
+      } as GridCell;
     },
     [filteredData, gridColumns, columnTypes, columnConfig, placeholder],
   );
 
   const onGridSelectionChange = useCallback(
     (selection: GridSelection) => {
+      setGridSelection(selection);
+      
       if (onSelect === "ignore") return;
 
-      const payload = {
+      const payload: PythonSelection = {
         rows: selection.rows.toArray(),
         columns: selection.columns.toArray(),
         current: selection.current,
       };
 
-      sendEvent(payload);
+      sendEvent(payload as any);
     },
     [onSelect, sendEvent],
   );
+
+  const rowSelectionMode = useMemo(() => {
+    if (selectionMode === "multi-row") return "multi";
+    if (selectionMode === "single-row") return "auto";
+    if (Array.isArray(selectionMode) && selectionMode.includes("row")) return "multi";
+    return undefined;
+  }, [selectionMode]);
 
   const gridHeight = useMemo(() => {
     if (height === "auto") return 400; // Fixed default for auto in Phase 1
@@ -116,7 +149,9 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
         columns={gridColumns}
         rows={filteredData.length}
         getCellContent={getCellContent}
+        gridSelection={gridSelection}
         onGridSelectionChange={onGridSelectionChange}
+        rowSelectionMode={rowSelectionMode}
         rowHeight={rowHeight}
         rowMarkers={!hideIndex ? "number" : "none"}
         getCellsForSelection={true}

@@ -2,6 +2,14 @@ import {
   GridCell,
   GridCellKind,
   NumberCell,
+  BooleanCell,
+  ImageCell,
+  TextCell,
+  DrilldownCell,
+  BubbleCell,
+  UriCell,
+  MarkdownCell,
+  RowIDCell,
 } from "@glideapps/glide-data-grid";
 
 export type PythonType = "str" | "int" | "float" | "bool" | "NoneType" | string;
@@ -22,13 +30,13 @@ export interface ColumnConfig {
   validate?: string;
   display_text?: string;
   timezone?: string;
-
+  
   // Base GridCell properties
   theme_override?: any;
   style?: "normal" | "faded";
   content_align?: "left" | "center" | "right";
   cursor?: string;
-
+  
   disabled?: boolean;
 }
 
@@ -38,7 +46,7 @@ export function mapPythonToGlideCell(
   config?: ColumnConfig,
 ): GridCell {
   const baseProps: any = {};
-
+  
   if (config) {
     if (config.theme_override) baseProps.themeOverride = config.theme_override;
     if (config.style) baseProps.style = config.style;
@@ -54,7 +62,7 @@ export function mapPythonToGlideCell(
       readonly: true,
       displayData: "",
       data: "",
-    };
+    } as TextCell;
   }
 
   // Handle specific ColumnConfig types by mapping them to best-fit standard or custom Glide cell kinds
@@ -65,7 +73,6 @@ export function mapPythonToGlideCell(
           ...baseProps,
           kind: GridCellKind.Number,
           allowOverlay: true,
-          // readonly: false,
           data: Number(value),
           displayData: String(value),
         } as NumberCell;
@@ -74,9 +81,8 @@ export function mapPythonToGlideCell(
           ...baseProps,
           kind: GridCellKind.Boolean,
           allowOverlay: false,
-          // readonly: false,
           data: Boolean(value),
-        };
+        } as BooleanCell;
       case "ImageColumn":
         return {
           ...baseProps,
@@ -84,7 +90,7 @@ export function mapPythonToGlideCell(
           allowOverlay: true,
           displayData: Array.isArray(value) ? value : [String(value)],
           data: Array.isArray(value) ? value : [String(value)],
-        };
+        } as ImageCell;
       case "JsonColumn":
         return {
           ...baseProps,
@@ -93,7 +99,7 @@ export function mapPythonToGlideCell(
           displayData:
             typeof value === "string" ? value : JSON.stringify(value),
           data: typeof value === "string" ? value : JSON.stringify(value),
-        };
+        } as TextCell;
       case "DateColumn":
       case "DatetimeColumn":
         return {
@@ -102,34 +108,26 @@ export function mapPythonToGlideCell(
           allowOverlay: true,
           displayData: String(value),
           data: String(value),
-        };
+        } as TextCell;
       case "SelectboxColumn":
         return {
           ...baseProps,
-          kind: GridCellKind.Custom,
+          kind: GridCellKind.Drilldown,
           allowOverlay: true,
-          data: {
-            kind: "dropdown-cell",
-            allowedValues: config.options?.map(String) || [],
-            value: String(value),
-          },
-          copyData: String(value),
-        } as any;
+          data: Array.isArray(value)
+            ? (value as unknown[])?.map((v) => ({
+                text: String(v),
+              }))
+            : [{ text: String(value) }],
+        } as DrilldownCell;
       case "MultiselectColumn":
         const tags = Array.isArray(value) ? value.map(String) : [String(value)];
         return {
           ...baseProps,
-          kind: GridCellKind.Custom,
+          kind: GridCellKind.Bubble,
           allowOverlay: true,
-          data: {
-            kind: "tags-cell",
-            tags: tags,
-            possibleTags:
-              config.options?.map((opt) => ({ tag: String(opt) })) ||
-              tags.map((t) => ({ tag: t })),
-          },
-          copyData: tags.join(", "),
-        } as any;
+          data: tags,
+        } as BubbleCell;
       case "SparklineColumn":
         return {
           ...baseProps,
@@ -147,10 +145,9 @@ export function mapPythonToGlideCell(
           ...baseProps,
           kind: GridCellKind.Uri,
           allowOverlay: true,
-          // readonly: false,
           data: String(value),
           displayData: config.display_text || String(value),
-        };
+        } as UriCell;
       case "ProtectedColumn":
         return {
           ...baseProps,
@@ -163,17 +160,16 @@ export function mapPythonToGlideCell(
           ...baseProps,
           kind: GridCellKind.RowID,
           allowOverlay: false,
-          readonly: true, // ID columns are typically read-only
+          readonly: true,
           data: String(value),
-        };
+        } as RowIDCell;
       case "MarkdownColumn":
         return {
           ...baseProps,
           kind: GridCellKind.Markdown,
           allowOverlay: true,
-          // readonly: false,
           data: String(value),
-        };
+        } as MarkdownCell;
     }
   }
 
@@ -188,7 +184,7 @@ export function mapPythonToGlideCell(
         readonly: false,
         data: Number(value),
         displayData: String(value),
-      };
+      } as NumberCell;
     case "bool":
       return {
         ...baseProps,
@@ -196,7 +192,7 @@ export function mapPythonToGlideCell(
         allowOverlay: false,
         readonly: false,
         data: Boolean(value),
-      };
+      } as BooleanCell;
     case "str":
     default:
       return {
@@ -206,6 +202,6 @@ export function mapPythonToGlideCell(
         readonly: false,
         displayData: String(value),
         data: String(value),
-      };
+      } as TextCell;
   }
 }
