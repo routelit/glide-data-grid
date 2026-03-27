@@ -1,4 +1,4 @@
-from typing import Any, Callable, ClassVar, Iterable, Literal, Optional, Union
+from typing import Any, Callable, ClassVar, Iterable, Literal, Optional, Union, Tuple
 import pandas as pd
 from routelit import AssetTarget, RouteLitBuilder  # type: ignore[import-untyped]
 from .utils import normalize_data, extract_columns, infer_column_types
@@ -70,6 +70,15 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
         
         element_key = key or self._new_text_id("grid_data_grid")
         
+        # Handle state
+        current_selection = self.session_state.get(element_key)
+        has_event, event_value = self._get_event_value(element_key, "select")
+        if has_event:
+            current_selection = event_value
+            self.session_state[element_key] = current_selection
+            if callable(on_select):
+                on_select(current_selection)
+
         props = {
             "data": normalized,
             "columns": display_columns,
@@ -84,21 +93,22 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
             "search": search,
             "theme": theme,
             "id": element_key,
+            "selection": current_selection,
         }
         
         # Handle callbacks and return values
         if callable(on_select):
             props["onSelect"] = "callback"
-        elif on_select == "rerun":
-            props["onSelect"] = "rerun"
         else:
-            props["onSelect"] = "ignore"
+            props["onSelect"] = on_select
             
-        return self._create_element(
+        self._create_element(
             name="grid_data_grid",
             props=props,
             key=element_key
         )
+        
+        return current_selection
 
     def data_editor(
         self,
@@ -134,8 +144,36 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
         
         element_key = key or self._new_text_id("grid_data_editor")
 
+        # Handle state
+        current_data = self.session_state.get(element_key)
+        if current_data is None:
+            current_data = data
+            self.session_state[element_key] = current_data
+
+        has_event, event_value = self._get_event_value(element_key, "change", "data")
+        if has_event:
+            # event_value is the updated row-major list of dicts
+            updated_data = event_value
+            
+            # Convert back to input type if needed
+            if isinstance(data, pd.DataFrame):
+                res = pd.DataFrame(updated_data)
+            elif isinstance(data, dict):
+                # Convert row-major list of dicts back to column-major dict
+                if not updated_data:
+                    res = {}
+                else:
+                    res = {k: [row[k] for row in updated_data] for k in updated_data[0].keys()}
+            else:
+                res = updated_data
+            
+            current_data = res
+            self.session_state[element_key] = current_data
+            if on_change:
+                on_change(current_data)
+
         props = {
-            "data": normalized,
+            "data": normalize_data(current_data), # Use the current state data
             "columns": display_columns,
             "columnTypes": column_types,
             "height": height,
@@ -153,9 +191,14 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
         # Handle on_change callback
         if on_change:
             props["onChange"] = "callback"
+        else:
+            # Default to rerun for data_editor so it returns edited data
+            props["onChange"] = "rerun"
             
-        return self._create_element(
+        self._create_element(
             name="grid_data_editor",
             props=props,
             key=element_key
         )
+        
+        return current_data

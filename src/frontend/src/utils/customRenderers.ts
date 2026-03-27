@@ -1,33 +1,26 @@
 import { GridCellKind } from "@glideapps/glide-data-grid";
 
 export const DateCellRenderer = {
-  kind: GridCellKind.Custom,
-  allowOverlay: true,
-  readonly: false,
+  kind: GridCellKind.Text,
   data: {
-    kind: "date-cell",
     value: "",
   },
   copyData: "",
 };
 
 export const DatetimeCellRenderer = {
-  kind: GridCellKind.Custom,
+  kind: GridCellKind.Text,
   allowOverlay: true,
   readonly: false,
   data: {
-    kind: "datetime-cell",
     value: "",
   },
   copyData: "",
 };
 
 export const SelectCellRenderer = {
-  kind: GridCellKind.Custom,
-  allowOverlay: true,
-  readonly: false,
+  kind: GridCellKind.Drilldown,
   data: {
-    kind: "select-cell",
     value: "",
     options: [],
   },
@@ -35,11 +28,8 @@ export const SelectCellRenderer = {
 };
 
 export const MultiselectCellRenderer = {
-  kind: GridCellKind.Custom,
-  allowOverlay: true,
-  readonly: false,
+  kind: GridCellKind.Bubble,
   data: {
-    kind: "multiselect-cell",
     value: [],
     options: [],
   },
@@ -47,23 +37,8 @@ export const MultiselectCellRenderer = {
 };
 
 export const ImageCellRenderer = {
-  kind: GridCellKind.Custom,
+  kind: GridCellKind.Image,
   allowOverlay: true,
   readonly: true,
-  data: {
-    kind: "image-cell",
-    url: "",
-  },
-  copyData: "",
-};
-
-export const JsonCellRenderer = {
-  kind: GridCellKind.Custom,
-  allowOverlay: true,
-  readonly: false,
-  data: {
-    kind: "json-cell",
-    value: {},
-  },
   copyData: "",
 };

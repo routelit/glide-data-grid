@@ -10,6 +10,10 @@ from .types import (
     DatetimeColumn,
     LinkColumn,
     ImageColumn,
+    ProtectedColumn,
+    IDColumn,
+    MarkdownColumn,
+    JsonColumn,
 )
 
 __all__ = [
@@ -24,4 +28,8 @@ __all__ = [
     "DatetimeColumn",
     "LinkColumn",
     "ImageColumn",
+    "ProtectedColumn",
+    "IDColumn",
+    "MarkdownColumn",
+    "JsonColumn",
 ]

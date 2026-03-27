@@ -7,6 +7,7 @@ from routelit import PropertyDict, RouteLitRequest
 class MockRLRequest(RouteLitRequest):
     def __init__(self, method="POST"):
         self._method = method
+        self._ui_event = None
     def get_headers(self): return {}
     def get_path_params(self): return {}
     def get_referrer(self): return None

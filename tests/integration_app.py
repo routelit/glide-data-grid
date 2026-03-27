@@ -13,43 +13,39 @@ routelit = RouteLit(RLBuilder)
 adapter = RouteLitFlaskAdapter(routelit).configure(app)
 
 # Test data
-test_data = pd.DataFrame({
-    "name": ["Alice", "Bob", "Charlie", "David"],
-    "age": [30, 25, 35, 28],
-    "sales": [100, 150, 200, 175],
-    "active": [True, False, True, True],
-})
+test_data = pd.DataFrame(
+    {
+        "name": ["Alice", "Bob", "Charlie", "David"],
+        "age": [30, 25, 35, 28],
+        "sales": [100, 150, 200, 175],
+        "active": [True, False, True, True],
+    }
+)
+
 
 def test_page(ui: RLBuilder):
     ui.title("🧪 RouteLit Glide Data Grid Integration Test")
-    
+
     # Test 1: Data Grid (Read-Only)
     ui.subheader("1. Data Grid (Read-Only)")
     selection = ui.data_grid(
-        test_data,
-        key="test-grid",
-        on_select="rerun",
-        selection_mode="multi-row"
+        test_data, key="test-grid", on_select="rerun", selection_mode="multi-row"
     )
     if selection:
-        ui.success(f"✅ Selection: {selection}")
+        ui.text(f"✅ Selection: {selection}")
     else:
-        ui.info("Select rows in the grid above")
-    
-    ui.divider()
+        ui.text("ℹ️ Select rows in the grid above")
+
+    ui.hr()
 
     # Test 2: Data Editor (Editable)
     ui.subheader("2. Data Editor (Editable)")
-    edited_data = ui.data_editor(
-        test_data,
-        key="test-editor",
-        num_rows="dynamic"
-    )
+    edited_data = ui.data_editor(test_data, key="test-editor", num_rows="dynamic")
     ui.text("Current data in editor:")
-    ui.json(edited_data)
-    
-    ui.divider()
-    
+    ui.markdown(f"```json\n{edited_data}\n```")
+
+    ui.hr()
+
     # Test 3: Multi-type data
     ui.subheader("3. Multi-type data")
     ui.data_grid(
@@ -58,17 +54,21 @@ def test_page(ui: RLBuilder):
             "Int": [1, 2, 3],
             "Float": [1.1, 2.2, 3.3],
             "Bool": [True, False, True],
-            "None": [None, None, None]
+            "None": [None, None, None],
         },
-        key="test-types"
+        key="test-types",
     )
-    
+
     ui.subheader("✅ All Tests Passed!")
-    ui.text("If you can see the grid with data rendered correctly, the integration is working.")
+    ui.text(
+        "If you can see the grid with data rendered correctly, the integration is working."
+    )
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     return adapter.response(test_page)
+
 
 if __name__ == "__main__":
     print("=" * 60)
@@ -77,5 +77,5 @@ if __name__ == "__main__":
     print("\nStarting Flask server...")
     print("Open http://localhost:5001 in your browser")
     print("=" * 60)
-    
+
     app.run(debug=True, port=5001)

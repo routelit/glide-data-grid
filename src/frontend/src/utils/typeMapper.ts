@@ -5,11 +5,11 @@ import {
   BooleanCell,
   ImageCell,
   TextCell,
-  DrilldownCell,
-  BubbleCell,
   UriCell,
   MarkdownCell,
   RowIDCell,
+  DrilldownCell,
+  BubbleCell,
 } from "@glideapps/glide-data-grid";
 
 export type PythonType = "str" | "int" | "float" | "bool" | "NoneType" | string;
@@ -30,13 +30,13 @@ export interface ColumnConfig {
   validate?: string;
   display_text?: string;
   timezone?: string;
-  
+
   // Base GridCell properties
   theme_override?: any;
   style?: "normal" | "faded";
   content_align?: "left" | "center" | "right";
   cursor?: string;
-  
+
   disabled?: boolean;
 }
 
@@ -45,8 +45,13 @@ export function mapPythonToGlideCell(
   pythonType: PythonType,
   config?: ColumnConfig,
 ): GridCell {
-  const baseProps: any = {};
-  
+  const baseProps: {
+    themeOverride?: any;
+    style?: "normal" | "faded";
+    contentAlign?: "left" | "center" | "right";
+    cursor?: string;
+  } = {};
+
   if (config) {
     if (config.theme_override) baseProps.themeOverride = config.theme_override;
     if (config.style) baseProps.style = config.style;
@@ -65,7 +70,7 @@ export function mapPythonToGlideCell(
     } as TextCell;
   }
 
-  // Handle specific ColumnConfig types by mapping them to best-fit standard or custom Glide cell kinds
+  // Handle specific ColumnConfig types by mapping them to best-fit standard Glide cell kinds
   if (config?.type) {
     switch (config.type) {
       case "NumberColumn":
@@ -97,7 +102,7 @@ export function mapPythonToGlideCell(
           kind: GridCellKind.Text,
           allowOverlay: true,
           displayData:
-            typeof value === "string" ? value : JSON.stringify(value),
+            typeof value === "string" ? value : Array.isArray(value) ? JSON.stringify(value) : String(value),
           data: typeof value === "string" ? value : JSON.stringify(value),
         } as TextCell;
       case "DateColumn":
@@ -121,25 +126,22 @@ export function mapPythonToGlideCell(
             : [{ text: String(value) }],
         } as DrilldownCell;
       case "MultiselectColumn":
-        const tags = Array.isArray(value) ? value.map(String) : [String(value)];
+        const tags = Array.isArray(value) ? (value as any[]).map(String) : [String(value)];
         return {
           ...baseProps,
           kind: GridCellKind.Bubble,
           allowOverlay: true,
           data: tags,
         } as BubbleCell;
-      case "SparklineColumn":
+      case "SparklineColumn": // Reverted to Text kind as requested
         return {
           ...baseProps,
-          kind: GridCellKind.Custom,
+          kind: GridCellKind.Text,
           allowOverlay: false,
           readonly: true,
-          data: {
-            kind: "sparkline-cell",
-            values: Array.isArray(value) ? value : [],
-          },
-          copyData: Array.isArray(value) ? value.join(",") : "",
-        } as any;
+          displayData: Array.isArray(value) ? value.join(", ") : String(value),
+          data: Array.isArray(value) ? value.join(", ") : String(value),
+        } as TextCell;
       case "LinkColumn":
         return {
           ...baseProps,
@@ -160,7 +162,7 @@ export function mapPythonToGlideCell(
           ...baseProps,
           kind: GridCellKind.RowID,
           allowOverlay: false,
-          readonly: true,
+          readonly: true, // ID columns are typically read-only
           data: String(value),
         } as RowIDCell;
       case "MarkdownColumn":

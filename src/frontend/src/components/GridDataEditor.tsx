@@ -5,14 +5,12 @@ import {
   Item,
   GridSelection,
 } from "@glideapps/glide-data-grid";
-import { allCells } from "@glideapps/glide-data-grid-cells";
 import { mapPythonToGlideCell, ColumnConfig } from "../utils/typeMapper";
 import { useDispatcherWith } from "routelit-client";
 import { useGridColumns } from "../hooks/useGridColumns";
 import { createGridSelection } from "../utils/selectionUtils";
 
 import "@glideapps/glide-data-grid/dist/index.css";
-import "@glideapps/glide-data-grid-cells/dist/index.css";
 
 interface PythonSelection {
   rows?: number[];
@@ -38,168 +36,201 @@ interface GridDataEditorProps {
   id: string;
 }
 
-export const GridDataEditor: React.FC<GridDataEditorProps> = memo(({
-  data: initialData,
-  columns,
-  columnTypes,
-  height = "auto",
-  width = "stretch",
-  hideIndex = false,
-  rowHeight,
-  numRows = "fixed",
-  disabled = false,
-  columnConfig,
-  onChange,
-  columnOrder,
-  selection: initialSelection,
-  id,
-}) => {
-  const sendEvent = useDispatcherWith(id, "change");
+export const GridDataEditor: React.FC<GridDataEditorProps> = memo(
+  ({
+    data: initialData,
+    columns,
+    columnTypes,
+    height = "auto",
+    width = "stretch",
+    hideIndex = false,
+    rowHeight,
+    numRows = "fixed",
+    disabled = false,
+    columnConfig,
+    onChange,
+    columnOrder,
+    selection: initialSelection,
+    id,
+  }) => {
+    const sendEvent = useDispatcherWith(id, "change");
 
-  const [gridSelection, setGridSelection] = useState<GridSelection>(() => 
-    createGridSelection(initialSelection)
-  );
+    const [gridSelection, setGridSelection] = useState<GridSelection>(() =>
+      createGridSelection(initialSelection),
+    );
 
-  useEffect(() => {
-    if (initialSelection) {
+    useEffect(() => {
+      if (initialSelection) {
+        setLocalData(initialData);
+        setGridSelection(createGridSelection(initialSelection));
+      }
+    }, [initialSelection, initialData]);
+
+    const [localData, setLocalData] = useState(initialData);
+
+    useEffect(() => {
       setLocalData(initialData);
-      setGridSelection(createGridSelection(initialSelection));
-    }
-  }, [initialSelection, initialData]);
+    }, [initialData]);
 
-  const [localData, setLocalData] = useState(initialData);
+    const gridColumns = useGridColumns(columns, columnConfig, columnOrder);
 
-  useEffect(() => {
-    setLocalData(initialData);
-  }, [initialData]);
+    const getCellContent = useCallback(
+      (cell: Item): GridCell => {
+        const [col, row] = cell;
+        const dataRow = localData[row];
+        const columnName = gridColumns[col].id as string;
+        const value = dataRow ? dataRow[columnName] : undefined;
+        const pythonType = columnTypes[columnName];
+        const config = columnConfig?.[columnName];
 
-  const gridColumns = useGridColumns(columns, columnConfig, columnOrder);
+        const glideCell = mapPythonToGlideCell(value, pythonType, config);
 
-  const getCellContent = useCallback(
-    (cell: Item): GridCell => {
-      const [col, row] = cell;
-      const dataRow = localData[row];
-      const columnName = gridColumns[col].id as string;
-      const value = dataRow ? dataRow[columnName] : undefined;
-      const pythonType = columnTypes[columnName];
-      const config = columnConfig?.[columnName];
+        // Determine if cell is disabled
+        let isCellDisabled = false;
+        const colConfig = columnConfig?.[columnName];
 
-      const glideCell = mapPythonToGlideCell(value, pythonType, config);
-      
-      // Determine if cell is disabled
-      let isCellDisabled = false;
-      const colConfig = columnConfig?.[columnName];
-      
-      // Respect column-level disabled configuration
-      if (colConfig && colConfig.disabled === true) {
-        isCellDisabled = true;
-      } else if (disabled === true) {
-        isCellDisabled = true;
-      } else if (Array.isArray(disabled)) {
-        isCellDisabled = disabled.includes(columnName) || disabled.includes(col);
-      }
+        // Respect column-level disabled configuration
+        if (colConfig && colConfig.disabled === true) {
+          isCellDisabled = true;
+        } else if (disabled === true) {
+          isCellDisabled = true;
+        } else if (Array.isArray(disabled)) {
+          isCellDisabled =
+            disabled.includes(columnName) || disabled.includes(col);
+        }
 
-      return {
-        ...glideCell,
-        readonly: isCellDisabled || (glideCell as any).readonly || false,
-      } as GridCell;
-    },
-    [localData, gridColumns, columnTypes, disabled, columnConfig]
-  );
+        return {
+          ...glideCell,
+          readonly: isCellDisabled || (glideCell as any).readonly || false,
+        } as GridCell;
+      },
+      [localData, gridColumns, columnTypes, disabled, columnConfig],
+    );
 
-  const onCellEdited = useCallback(
-    (cell: Item, newValue: GridCell) => {
-      const [col, row] = cell;
-      const columnName = gridColumns[col].id as string;
-      
-      // Perform validation based on column config
-      const config = columnConfig?.[columnName];
-      let value: any = (newValue as any).data;
+    const onCellEdited = useCallback(
+      (cell: Item, newValue: GridCell) => {
+        const [col, row] = cell;
+        const columnName = gridColumns[col].id as string;
 
-      // Basic type validation
-      const pythonType = columnTypes[columnName];
-      if (pythonType === "int") {
-        const num = typeof value === "string" ? parseInt(value) : Number(value);
-        if (isNaN(num)) return; // Reject edit
-        value = num;
-      } else if (pythonType === "float") {
-        const num = typeof value === "string" ? parseFloat(value) : Number(value);
-        if (isNaN(num)) return; // Reject edit
-        value = num;
-      }
+        // Perform validation based on column config
+        const config = columnConfig?.[columnName];
+        let value: any = (newValue as any).data;
 
-      // ColumnConfig validation
-      if (config) {
-        if (config.min_value !== undefined && value < config.min_value) return;
-        if (config.max_value !== undefined && value > config.max_value) return;
-        if (config.max_chars !== undefined && String(value).length > config.max_chars) return;
-      }
+        // Handle custom cell types where data is an object (e.g., dropdown-cell, tags-cell)
+        if (typeof value === "object" && value !== null) {
+          if ("value" in value) {
+            value = value.value;
+          } else if ("values" in value) {
+            value = value.values;
+          } else if ("tags" in value) {
+            value = value.tags;
+          }
+        }
 
-      const newData = [...localData];
-      const newRow = { ...newData[row] };
+        // Basic type validation
+        const pythonType = columnTypes[columnName];
+        if (pythonType === "int") {
+          const num =
+            typeof value === "string" ? parseInt(value) : Number(value);
+          if (isNaN(num)) return; // Reject edit
+          value = num;
+        } else if (pythonType === "float") {
+          const num =
+            typeof value === "string" ? parseFloat(value) : Number(value);
+          if (isNaN(num)) return; // Reject edit
+          value = num;
+        }
 
-      newRow[columnName] = value;
-      newData[row] = newRow;
+        // ColumnConfig validation
+        if (config) {
+          if (config.min_value !== undefined && value < config.min_value)
+            return;
+          if (config.max_value !== undefined && value > config.max_value)
+            return;
+          if (
+            config.max_chars !== undefined &&
+            String(value).length > config.max_chars
+          )
+            return;
+        }
 
+        const newData = [...localData];
+        const newRow = { ...newData[row] };
+
+        newRow[columnName] = value;
+        newData[row] = newRow;
+
+        setLocalData(newData);
+
+        if (onChange !== "ignore") {
+          sendEvent({ data: newData });
+        }
+      },
+      [
+        localData,
+        gridColumns,
+        columnTypes,
+        columnConfig,
+        onChange,
+        sendEvent,
+        id,
+      ],
+    );
+
+    const onRowAppended = useCallback(() => {
+      const newRow: Record<string, any> = {};
+      columns.forEach((col) => {
+        const type = columnTypes[col];
+        if (type === "int" || type === "float") newRow[col] = 0;
+        else if (type === "bool") newRow[col] = false;
+        else newRow[col] = "";
+      });
+
+      const newData = [...localData, newRow];
       setLocalData(newData);
 
       if (onChange !== "ignore") {
         sendEvent({ data: newData });
       }
-    },
-    [localData, gridColumns, columnTypes, columnConfig, onChange, sendEvent]
-  );
+    }, [localData, columns, columnTypes, onChange, sendEvent, id]);
 
-  const onRowAppended = useCallback(() => {
-    const newRow: Record<string, any> = {};
-    columns.forEach((col) => {
-      const type = columnTypes[col];
-      if (type === "int" || type === "float") newRow[col] = 0;
-      else if (type === "bool") newRow[col] = false;
-      else newRow[col] = "";
-    });
+    const gridHeight = useMemo(() => {
+      if (height === "auto") return 400;
+      if (height === "stretch") return "100%";
+      return height;
+    }, [height]);
 
-    const newData = [...localData, newRow];
-    setLocalData(newData);
+    const gridWidth = useMemo(() => {
+      if (width === "stretch") return "100%";
+      return width;
+    }, [width]);
 
-    if (onChange !== "ignore") {
-      sendEvent({ data: newData });
-    }
-  }, [localData, columns, columnTypes, onChange, sendEvent]);
-
-  const gridHeight = useMemo(() => {
-    if (height === "auto") return 400;
-    if (height === "stretch") return "100%";
-    return height;
-  }, [height]);
-
-  const gridWidth = useMemo(() => {
-    if (width === "stretch") return "100%";
-    return width;
-  }, [width]);
-
-  return (
-    <div style={{ height: gridHeight, width: gridWidth }}>
-      <DataEditor
-        width="100%"
-        height="100%"
-        columns={gridColumns}
-        rows={localData.length}
-        getCellContent={getCellContent}
-        onCellEdited={onCellEdited}
-        onRowAppended={(numRows === "dynamic" || numRows === "add") ? onRowAppended : undefined}
-        gridSelection={gridSelection}
-        onGridSelectionChange={setGridSelection}
-        rowHeight={rowHeight}
-        rowMarkers={!hideIndex ? "number" : "none"}
-        getCellsForSelection={true}
-        customRenderers={allCells}
-        trailingRowOptions={{
-          hint: "Add row",
-        }}
-      />
-    </div>
-  );
-});
+    return (
+      <div style={{ height: gridHeight, width: gridWidth }}>
+        <DataEditor
+          width="100%"
+          height="100%"
+          columns={gridColumns}
+          rows={localData.length}
+          getCellContent={getCellContent}
+          onCellEdited={onCellEdited}
+          onRowAppended={
+            numRows === "dynamic" || numRows === "add"
+              ? onRowAppended
+              : undefined
+          }
+          gridSelection={gridSelection}
+          onGridSelectionChange={setGridSelection}
+          rowHeight={rowHeight}
+          rowMarkers={!hideIndex ? "number" : "none"}
+          getCellsForSelection={true}
+          trailingRowOptions={{
+            hint: "Add row",
+          }}
+        />
+      </div>
+    );
+  },
+);
 
 export default GridDataEditor;

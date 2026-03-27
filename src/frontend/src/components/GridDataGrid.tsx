@@ -6,14 +6,12 @@ import {
   GridSelection,
   Theme,
 } from "@glideapps/glide-data-grid";
-import { allCells } from "@glideapps/glide-data-grid-cells";
 import { mapPythonToGlideCell, ColumnConfig } from "../utils/typeMapper";
 import { useGridColumns } from "../hooks/useGridColumns";
 import { useDispatcherWith } from "routelit-client";
-import { createGridSelection } from "../utils/selectionUtils";
+import { createGridSelection, createCompactSelection } from "../utils/selectionUtils";
 
 import "@glideapps/glide-data-grid/dist/index.css";
-import "@glideapps/glide-data-grid-cells/dist/index.css";
 
 interface PythonSelection {
   rows?: number[];
@@ -53,7 +51,7 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
   selectionMode,
   columnConfig,
   placeholder,
-  onSelect,
+  onSelect = "ignore",
   columnOrder,
   search,
   theme,
@@ -74,11 +72,11 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
   }, [initialSelection]);
 
   const filteredData = useMemo(() => {
-    if (!search) return data;
+    if (!search || search.trim() === "") return data;
     const lowerSearch = search.toLowerCase();
     return data.filter((row) =>
       columns.some((col) =>
-        String(row[col]).toLowerCase().includes(lowerSearch),
+        String(row[col] ?? "").toLowerCase().includes(lowerSearch),
       ),
     );
   }, [data, columns, search]);
@@ -108,19 +106,39 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
 
   const onGridSelectionChange = useCallback(
     (selection: GridSelection) => {
-      setGridSelection(selection);
+      let finalSelection = selection;
+      
+      // If we are in row selection mode and a cell is selected, expand to row selection
+      const isRowMode = selectionMode === "single-row" || selectionMode === "multi-row" || (Array.isArray(selectionMode) && selectionMode.includes("row"));
+      
+      if (isRowMode && selection.current?.cell !== undefined) {
+        const [_, row] = selection.current.cell;
+        if (selectionMode === "single-row") {
+          finalSelection = {
+            ...selection,
+            rows: createCompactSelection([row]),
+          };
+        } else {
+          finalSelection = {
+            ...selection,
+            rows: selection.rows.add(row),
+          };
+        }
+      }
+
+      setGridSelection(finalSelection);
       
       if (onSelect === "ignore") return;
 
       const payload: PythonSelection = {
-        rows: selection.rows.toArray(),
-        columns: selection.columns.toArray(),
-        current: selection.current,
+        rows: finalSelection.rows.toArray(),
+        columns: finalSelection.columns.toArray(),
+        current: finalSelection.current,
       };
 
       sendEvent(payload as any);
     },
-    [onSelect, sendEvent],
+    [onSelect, sendEvent, selectionMode],
   );
 
   const rowSelectionMode = useMemo(() => {
@@ -153,9 +171,8 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
         onGridSelectionChange={onGridSelectionChange}
         rowSelectionMode={rowSelectionMode}
         rowHeight={rowHeight}
-        rowMarkers={!hideIndex ? "number" : "none"}
+        rowMarkers={!hideIndex ? "both" : "none"}
         getCellsForSelection={true}
-        customRenderers={allCells}
         theme={theme}
       />
     </div>

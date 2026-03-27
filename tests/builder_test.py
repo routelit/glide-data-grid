@@ -33,6 +33,7 @@ class MockRLRequest(RouteLitRequest):
         self.pathname = pathname
         self.host = host
         self._method = method
+        self._ui_event = None
 
     def get_headers(self) -> dict[str, str]:
         return self.headers
