@@ -3,37 +3,19 @@ import {
   DataEditor,
   GridCell,
   Item,
-  GridSelection,
 } from "@glideapps/glide-data-grid";
-import { mapPythonToGlideCell, ColumnConfig } from "../utils/typeMapper";
+import { mapPythonToGlideCell } from "../utils/typeMapper";
 import { useDispatcherWith } from "routelit-client";
 import { useGridColumns } from "../hooks/useGridColumns";
-import { createGridSelection } from "../utils/selectionUtils";
+import { BaseGridProps } from "../types/grid";
+import { useGridDimensions, useRowMarkers, useGridSelectionSync } from "../hooks/gridHooks";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 
-interface PythonSelection {
-  rows?: number[];
-  columns?: number[];
-  current?: any;
-}
-
-interface GridDataEditorProps {
-  data: any[];
-  columns: string[];
-  columnTypes: Record<string, string>;
-  height?: "auto" | "content" | "stretch" | number;
-  width?: "stretch" | "content" | number;
-  hideIndex?: boolean;
-  rowHeight?: number;
+interface GridDataEditorProps extends BaseGridProps {
   numRows?: "fixed" | "dynamic" | "add" | "delete";
   disabled?: boolean | (string | number)[];
-  columnConfig?: Record<string, ColumnConfig>;
-  placeholder?: string;
   onChange?: "ignore" | "rerun" | "callback";
-  columnOrder?: string[];
-  selection?: PythonSelection;
-  id: string;
 }
 
 export const GridDataEditor: React.FC<GridDataEditorProps> = memo(
@@ -44,27 +26,22 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = memo(
     height = "auto",
     width = "stretch",
     hideIndex = false,
+    rowMarkers,
     rowHeight,
     numRows = "fixed",
     disabled = false,
     columnConfig,
     onChange,
     columnOrder,
+    freezeTrailingRows = 0,
+    freezeColumns = 0,
+    trailingRowOptions,
     selection: initialSelection,
     id,
   }) => {
     const sendEvent = useDispatcherWith(id, "change");
 
-    const [gridSelection, setGridSelection] = useState<GridSelection>(() =>
-      createGridSelection(initialSelection),
-    );
-
-    useEffect(() => {
-      if (initialSelection) {
-        setLocalData(initialData);
-        setGridSelection(createGridSelection(initialSelection));
-      }
-    }, [initialSelection, initialData]);
+    const [gridSelection, setGridSelection] = useGridSelectionSync(initialSelection);
 
     const [localData, setLocalData] = useState(initialData);
 
@@ -194,16 +171,15 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = memo(
       }
     }, [localData, columns, columnTypes, onChange, sendEvent, id]);
 
-    const gridHeight = useMemo(() => {
-      if (height === "auto") return 400;
-      if (height === "stretch") return "100%";
-      return height;
-    }, [height]);
+    const { gridHeight, gridWidth } = useGridDimensions(height, width);
+    const finalRowMarkers = useRowMarkers(rowMarkers, hideIndex, "number");
 
-    const gridWidth = useMemo(() => {
-      if (width === "stretch") return "100%";
-      return width;
-    }, [width]);
+    const finalTrailingRowOptions = useMemo(() => {
+      return {
+        hint: "Add row",
+        ...trailingRowOptions,
+      };
+    }, [trailingRowOptions]);
 
     return (
       <div style={{ height: gridHeight, width: gridWidth }}>
@@ -222,11 +198,11 @@ export const GridDataEditor: React.FC<GridDataEditorProps> = memo(
           gridSelection={gridSelection}
           onGridSelectionChange={setGridSelection}
           rowHeight={rowHeight}
-          rowMarkers={!hideIndex ? "number" : "none"}
+          rowMarkers={finalRowMarkers}
           getCellsForSelection={true}
-          trailingRowOptions={{
-            hint: "Add row",
-          }}
+          freezeColumns={freezeColumns}
+          freezeTrailingRows={freezeTrailingRows}
+          trailingRowOptions={finalTrailingRowOptions}
         />
       </div>
     );

@@ -11,6 +11,7 @@ class ColumnConfig:
     hidden: bool = False
     required: bool = False
     disabled: bool = False
+    group: Optional[str] = None
 
     # Base GridCell properties
     theme_override: Optional[Dict[str, Any]] = None

@@ -38,13 +38,21 @@ def showcase_features(ui: RLBuilder):
             "Score": [95.5, 88.0, 92.0],
         }
     )
-    selection = ui.data_grid(df, key="basic-grid", on_select="rerun")
+
+    def on_select1(selection):
+        ui.markdown(f"✅ **Selected 0:** {selection}")
+
+    selection = ui.data_grid(df, key="basic-grid", on_select=on_select1)
     if selection:
         ui.markdown(f"✅ **Selected:** {selection}")
 
     # 2. Data Editor with Validation
     ui.header("2. Data Editor (Editable with Validation)")
     ui.text("Try editing the 'Score' column (0-100 limit):")
+
+    def on_change2(changes):
+        ui.markdown(f"🔄 **Changes:** {changes}")
+
     edited_df = ui.data_editor(
         df,
         key="editable-grid",
@@ -55,6 +63,7 @@ def showcase_features(ui: RLBuilder):
                 label="Final Score", min_value=0, max_value=100, width="medium"
             ),
         },
+        on_change=on_change2,
     )
     ui.markdown(f"```python\n{edited_df}\n```")
 
@@ -138,12 +147,79 @@ def showcase_features(ui: RLBuilder):
         )
         ui.text("Selected Cell:" + str(cell_sel.get("current")) if cell_sel else None)
 
-    # 5. Search & Filter
+    # 5. Search Functionality
     ui.header("5. Search Functionality")
     search_query = ui.text_input(
         "Search in Grid", key="search-box", placeholder="Type to filter..."
     )
     ui.data_grid(df, key="searchable-grid", search=search_query)
+
+    # 6. Frozen Columns/Rows & Column Grouping
+    ui.header("6. Frozen Columns/Rows & Column Grouping")
+    ui.markdown(
+        "Keep context visible while scrolling through large datasets using "
+        "`freeze_columns` and `freeze_trailing_rows`. Organize columns into logical sets "
+        "using the `group` parameter in `column_config`."
+    )
+
+    large_df = pd.DataFrame(
+        {
+            "ID": range(1, 101),
+            "First Name": [f"First_{i}" for i in range(1, 101)],
+            "Last Name": [f"Last_{i}" for i in range(1, 101)],
+            "Email": [f"user_{i}@example.com" for i in range(1, 101)],
+            "Phone": [f"+1-555-{i:04d}" for i in range(1, 101)],
+            "Street": [f"{i} Main St" for i in range(1, 101)],
+            "City": ["New York", "London", "Paris", "Tokyo", "Berlin"] * 20,
+            "Zip": [f"{10000 + i}" for i in range(1, 101)],
+            "Country": ["USA", "UK", "France", "Japan", "Germany"] * 20,
+        }
+    )
+
+    ui.data_grid(
+        large_df,
+        key="frozen-group-grid",
+        freeze_columns=3,  # Fix ID, First Name, Last Name
+        freeze_trailing_rows=2,  # Fix last 2 rows
+        height=400,
+        column_config={
+            "ID": IDColumn(width="small"),
+            "First Name": TextColumn(group="Personal Info"),
+            "Last Name": TextColumn(group="Personal Info"),
+            "Email": TextColumn(group="Contact Details"),
+            "Phone": TextColumn(group="Contact Details"),
+            "Street": TextColumn(group="Location"),
+            "City": TextColumn(group="Location"),
+            "Zip": TextColumn(group="Location"),
+            "Country": TextColumn(group="Location"),
+        },
+    )
+
+    # 7. Row Markers & Trailing Row Options
+    ui.header("7. Row Markers & Trailing Row Options")
+
+    col1, col2 = ui.columns(2)
+
+    with col1:
+        ui.subheader("Custom Row Markers (Checkbox)")
+        ui.data_grid(
+            df,
+            key="markers-grid",
+            row_markers="checkbox",
+            height=200,
+        )
+
+    with col2:
+        ui.subheader("Custom Trailing Row Hint")
+        ui.data_editor(
+            df,
+            key="trailing-editor",
+            num_rows="dynamic",
+            trailing_row_options={
+                "hint": "Click here to add a new teammate",
+            },
+            height=200,
+        )
 
 
 @app.route("/", methods=["GET", "POST"])

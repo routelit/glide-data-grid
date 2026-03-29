@@ -1,43 +1,22 @@
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   DataEditor,
   GridCell,
   Item,
   GridSelection,
-  Theme,
 } from "@glideapps/glide-data-grid";
-import { mapPythonToGlideCell, ColumnConfig } from "../utils/typeMapper";
+import { mapPythonToGlideCell } from "../utils/typeMapper";
 import { useGridColumns } from "../hooks/useGridColumns";
 import { useDispatcherWith } from "routelit-client";
-import { createGridSelection, createCompactSelection } from "../utils/selectionUtils";
+import { createCompactSelection } from "../utils/selectionUtils";
+import { BaseGridProps, PythonSelection } from "../types/grid";
+import { useGridDimensions, useRowMarkers, useGridSelectionSync } from "../hooks/gridHooks";
 
 import "@glideapps/glide-data-grid/dist/index.css";
 
-interface PythonSelection {
-  rows?: number[];
-  columns?: number[];
-  current?: any;
-}
-
-interface GridDataGridProps {
-  data: any[];
-  columns: string[];
-  columnTypes: Record<string, string>;
-  height?: "auto" | "content" | "stretch" | number;
-  width?: "stretch" | "content" | number;
-  hideIndex?: boolean;
-  rowHeight?: number;
-  selectionMode?: string | string[];
-  columnConfig?: Record<string, ColumnConfig>;
-  placeholder?: string;
+interface GridDataGridProps extends BaseGridProps {
   onSelect?: "ignore" | "rerun" | "callback";
-  columnOrder?: string[];
   search?: string;
-  theme?: Theme;
-  frozenRows?: number;
-  frozenColumns?: number;
-  selection?: PythonSelection;
-  id: string;
 }
 
 export const GridDataGrid: React.FC<GridDataGridProps> = ({
@@ -47,6 +26,7 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
   height = "auto",
   width = "stretch",
   hideIndex = false,
+  rowMarkers,
   rowHeight,
   selectionMode,
   columnConfig,
@@ -55,21 +35,15 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
   columnOrder,
   search,
   theme,
+  freezeTrailingRows = 0,
+  freezeColumns = 0,
+  trailingRowOptions,
   selection: initialSelection,
   id,
 }) => {
   const sendEvent = useDispatcherWith(id, "select");
 
-  const [gridSelection, setGridSelection] = useState<GridSelection>(() => 
-    createGridSelection(initialSelection)
-  );
-
-  // Sync with backend selection if provided
-  useEffect(() => {
-    if (initialSelection) {
-      setGridSelection(createGridSelection(initialSelection));
-    }
-  }, [initialSelection]);
+  const [gridSelection, setGridSelection] = useGridSelectionSync(initialSelection);
 
   const filteredData = useMemo(() => {
     if (!search || search.trim() === "") return data;
@@ -138,7 +112,7 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
 
       sendEvent(payload as any);
     },
-    [onSelect, sendEvent, selectionMode],
+    [onSelect, sendEvent, selectionMode, setGridSelection],
   );
 
   const rowSelectionMode = useMemo(() => {
@@ -148,16 +122,8 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
     return undefined;
   }, [selectionMode]);
 
-  const gridHeight = useMemo(() => {
-    if (height === "auto") return 400; // Fixed default for auto in Phase 1
-    if (height === "stretch") return "100%";
-    return height;
-  }, [height]);
-
-  const gridWidth = useMemo(() => {
-    if (width === "stretch") return "100%";
-    return width;
-  }, [width]);
+  const { gridHeight, gridWidth } = useGridDimensions(height, width);
+  const finalRowMarkers = useRowMarkers(rowMarkers, hideIndex, "both");
 
   return (
     <div style={{ height: gridHeight, width: gridWidth }}>
@@ -171,9 +137,12 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
         onGridSelectionChange={onGridSelectionChange}
         rowSelectionMode={rowSelectionMode}
         rowHeight={rowHeight}
-        rowMarkers={!hideIndex ? "both" : "none"}
+        rowMarkers={finalRowMarkers}
         getCellsForSelection={true}
         theme={theme}
+        freezeColumns={freezeColumns}
+        freezeTrailingRows={freezeTrailingRows}
+        trailingRowOptions={trailingRowOptions}
       />
     </div>
   );

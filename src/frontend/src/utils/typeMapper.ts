@@ -21,6 +21,7 @@ export interface ColumnConfig {
   help?: string;
   hidden?: boolean;
   required?: boolean;
+  group?: string;
   format?: string;
   min_value?: any;
   max_value?: any;

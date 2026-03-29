@@ -37,10 +37,17 @@ export const getGridColumns = (
       }
     }
 
+    // Extract group
+    let group: string | undefined = undefined;
+    if (typeof config === "object" && config !== null && "group" in config) {
+      group = String(config.group);
+    }
+
     return {
       title: title,
       id: col,
       width: width,
+      group: group,
     };
   });
 };
