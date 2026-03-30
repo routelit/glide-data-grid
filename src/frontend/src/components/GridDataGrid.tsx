@@ -63,7 +63,7 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
       const dataRow = filteredData[row];
       const columnName = gridColumns[col].id as string;
       const value = dataRow[columnName];
-      
+
       // Use placeholder if value is null or undefined
       const displayValue = value === null || value === undefined ? (placeholder ?? "") : value;
       const pythonType = columnTypes[columnName];
@@ -81,10 +81,10 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
   const onGridSelectionChange = useCallback(
     (selection: GridSelection) => {
       let finalSelection = selection;
-      
+
       // If we are in row selection mode and a cell is selected, expand to row selection
       const isRowMode = selectionMode === "single-row" || selectionMode === "multi-row" || (Array.isArray(selectionMode) && selectionMode.includes("row"));
-      
+
       if (isRowMode && selection.current?.cell !== undefined) {
         const [_, row] = selection.current.cell;
         if (selectionMode === "single-row") {
@@ -101,7 +101,7 @@ export const GridDataGrid: React.FC<GridDataGridProps> = ({
       }
 
       setGridSelection(finalSelection);
-      
+
       if (onSelect === "ignore") return;
 
       const payload: PythonSelection = {

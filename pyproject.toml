@@ -2,9 +2,7 @@
 name = "routelit-glide-data-grid"
 version = "0.0.1"
 description = "This is a routelit library repository for that uses uv for their dependency management."
-authors = [
-    { name = "Rolando Gomez Tabar", email = "rolangom@gmail.com" },
-]
+authors = [{ name = "Rolando Gomez Tabar", email = "rolangom@gmail.com" }]
 readme = "README.md"
 keywords = ['python']
 requires-python = ">=3.10,<4.0"
@@ -33,11 +31,12 @@ Documentation = "https://rolangom.github.io/routelit-glide-data-grid/"
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
+    "pytest-cov>=6.0.0",
     "pre-commit>=4.5.1",
     "tox-uv>=1.29.0",
-    
+
     "ty>=0.0.14",
-    
+
     "ruff>=0.14.14",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.7.1",
@@ -120,8 +119,4 @@ ignore = [
 "tests/*" = ["S101"]
 
 [tool.ruff.format]
-
-
-
-branch = true
-source = ["src"]
+preview = true

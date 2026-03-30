@@ -9,6 +9,7 @@ copyright: Maintained by <a href="https://rolangom.com">rolangom</a>.
 
 nav:
   - Home: index.md
+  - Examples: examples.md
   - Modules: modules.md
 plugins:
   - search

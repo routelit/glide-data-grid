@@ -1,36 +1,41 @@
-from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, Tuple
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
+from typing import Any, Literal, TypedDict
+
 
 class SelectionCurrent(TypedDict, total=False):
     """Represents the currently selected cell/range."""
-    cell: Tuple[int, int]
-    range: Dict[str, int] # x, y, width, height
+
+    cell: tuple[int, int]
+    range: dict[str, int]  # x, y, width, height
+
 
 class GridSelection(TypedDict, total=False):
     """Represents the selection state of the grid."""
-    rows: List[int]
-    columns: List[int]
-    current: Optional[SelectionCurrent]
+
+    rows: list[int]
+    columns: list[int]
+    current: SelectionCurrent | None
+
 
 @dataclass
 class ColumnConfig:
     """Base class for column configuration."""
 
-    label: Optional[str] = None
-    width: Optional[Union[int, Literal["small", "medium", "large"]]] = None
-    help: Optional[str] = None
+    label: str | None = None
+    width: int | Literal["small", "medium", "large"] | None = None
+    help: str | None = None
     hidden: bool = False
     required: bool = False
     disabled: bool = False
-    group: Optional[str] = None
+    group: str | None = None
 
     # Base GridCell properties
-    theme_override: Optional[Dict[str, Any]] = None
-    style: Optional[Literal["normal", "faded"]] = None
-    content_align: Optional[Literal["left", "center", "right"]] = None
-    cursor: Optional[str] = None
+    theme_override: dict[str, Any] | None = None
+    style: Literal["normal", "faded"] | None = None
+    content_align: Literal["left", "center", "right"] | None = None
+    cursor: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {k: v for k, v in asdict(self).items() if v is not None}
 
 
@@ -38,18 +43,18 @@ class ColumnConfig:
 class NumberColumn(ColumnConfig):
     """Configuration for number columns."""
 
-    format: Optional[str] = None
-    min_value: Optional[Union[int, float]] = None
-    max_value: Optional[Union[int, float]] = None
-    step: Optional[Union[int, float]] = None
+    format: str | None = None
+    min_value: int | float | None = None
+    max_value: int | float | None = None
+    step: int | float | None = None
 
 
 @dataclass
 class TextColumn(ColumnConfig):
     """Configuration for text columns."""
 
-    max_chars: Optional[int] = None
-    validate: Optional[str] = None
+    max_chars: int | None = None
+    validate: str | None = None
 
 
 @dataclass
@@ -63,41 +68,41 @@ class CheckboxColumn(ColumnConfig):
 class SelectboxColumn(ColumnConfig):
     """Configuration for selectbox columns."""
 
-    options: List[Any] = field(default_factory=list)
+    options: list[Any] = field(default_factory=list)
 
 
 @dataclass
 class MultiselectColumn(ColumnConfig):
     """Configuration for multiselect columns."""
 
-    options: List[Any] = field(default_factory=list)
+    options: list[Any] = field(default_factory=list)
 
 
 @dataclass
 class DateColumn(ColumnConfig):
     """Configuration for date columns."""
 
-    format: Optional[str] = None
-    min_value: Optional[str] = None
-    max_value: Optional[str] = None
+    format: str | None = None
+    min_value: str | None = None
+    max_value: str | None = None
 
 
 @dataclass
 class DatetimeColumn(ColumnConfig):
     """Configuration for datetime columns."""
 
-    format: Optional[str] = None
-    min_value: Optional[str] = None
-    max_value: Optional[str] = None
-    timezone: Optional[str] = None
+    format: str | None = None
+    min_value: str | None = None
+    max_value: str | None = None
+    timezone: str | None = None
 
 
 @dataclass
 class LinkColumn(ColumnConfig):
     """Configuration for link columns."""
 
-    display_text: Optional[str] = None
-    max_chars: Optional[int] = None
+    display_text: str | None = None
+    max_chars: int | None = None
 
 
 @dataclass

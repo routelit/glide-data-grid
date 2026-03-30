@@ -1,20 +1,23 @@
+from typing import cast
+
 import pandas as pd
 from flask import Flask
+from routelit import RouteLit, RouteLitBuilder
 from routelit_flask import RouteLitFlaskAdapter
-from routelit import RouteLit
+
 from routelit_glide_data_grid.builder import RLBuilder
 from routelit_glide_data_grid.types import (
-    NumberColumn,
-    TextColumn,
-    SelectboxColumn,
-    MultiselectColumn,
     DateColumn,
+    IDColumn,
     ImageColumn,
     JsonColumn,
     LinkColumn,
-    IDColumn,
     MarkdownColumn,
+    MultiselectColumn,
+    NumberColumn,
     ProtectedColumn,
+    SelectboxColumn,
+    TextColumn,
 )
 
 app = Flask(__name__)
@@ -26,18 +29,17 @@ adapter = RouteLitFlaskAdapter(
 ).configure(app)
 
 
-def showcase_features(ui: RLBuilder):
+def showcase_features(ui: RouteLitBuilder) -> None:
+    ui = cast(RLBuilder, ui)
     ui.title("🚀 RouteLit Glide Data Grid: Feature Showcase")
 
     # 1. Basic Data Grid (Read-Only)
     ui.header("1. Basic Data Grid")
-    df = pd.DataFrame(
-        {
-            "ID": [1, 2, 3],
-            "Name": ["Alice", "Bob", "Charlie"],
-            "Score": [95.5, 88.0, 92.0],
-        }
-    )
+    df = pd.DataFrame({
+        "ID": [1, 2, 3],
+        "Name": ["Alice", "Bob", "Charlie"],
+        "Score": [95.5, 88.0, 92.0],
+    })
 
     def on_select1(selection):
         ui.markdown(f"✅ **Selected 0:** {selection}")
@@ -59,9 +61,7 @@ def showcase_features(ui: RLBuilder):
         num_rows="dynamic",
         column_config={
             "ID": IDColumn(label="User ID", width="small"),
-            "Score": NumberColumn(
-                label="Final Score", min_value=0, max_value=100, width="medium"
-            ),
+            "Score": NumberColumn(label="Final Score", min_value=0, max_value=100, width="medium"),
         },
         on_change=on_change2,
     )
@@ -88,9 +88,7 @@ def showcase_features(ui: RLBuilder):
         key="complex-grid",
         column_config={
             "Date": DateColumn(label="Event Date"),
-            "Status": SelectboxColumn(
-                label="Status", options=["Active", "Pending", "Closed"]
-            ),
+            "Status": SelectboxColumn(label="Status", options=["Active", "Pending", "Closed"]),
             "Tags": MultiselectColumn(label="Tags", options=["Red", "Green", "Blue"]),
             "Image": ImageColumn(label="Thumbnail"),
             "JSON": JsonColumn(label="Metadata"),
@@ -107,9 +105,7 @@ def showcase_features(ui: RLBuilder):
         key="complex-editor-grid",
         column_config={
             "Date": DateColumn(label="Event Date"),
-            "Status": SelectboxColumn(
-                label="Status", options=["Active", "Pending", "Closed"]
-            ),
+            "Status": SelectboxColumn(label="Status", options=["Active", "Pending", "Closed"]),
             "Tags": MultiselectColumn(label="Tags", options=["Red", "Green", "Blue"]),
             "Image": ImageColumn(label="Thumbnail"),
             "JSON": JsonColumn(label="Metadata"),
@@ -134,7 +130,7 @@ def showcase_features(ui: RLBuilder):
             on_select="rerun",
             column_config={"Score": NumberColumn(content_align="right")},
         )
-        ui.text("Selected Rows:" + str(row_sel.get("rows")) if row_sel else [])
+        ui.text("Selected Rows: " + (str(row_sel.get("rows")) if row_sel else "[]"))
 
     with col2:
         ui.subheader("Cell Selection")
@@ -145,13 +141,11 @@ def showcase_features(ui: RLBuilder):
             on_select="rerun",
             theme={"bgCell": "#f0f7ff"},
         )
-        ui.text("Selected Cell:" + str(cell_sel.get("current")) if cell_sel else None)
+        ui.text("Selected Cell: " + (str(cell_sel.get("current")) if cell_sel else "None"))
 
     # 5. Search Functionality
     ui.header("5. Search Functionality")
-    search_query = ui.text_input(
-        "Search in Grid", key="search-box", placeholder="Type to filter..."
-    )
+    search_query = ui.text_input("Search in Grid", key="search-box", placeholder="Type to filter...")
     ui.data_grid(df, key="searchable-grid", search=search_query)
 
     # 6. Frozen Columns/Rows & Column Grouping
@@ -162,19 +156,17 @@ def showcase_features(ui: RLBuilder):
         "using the `group` parameter in `column_config`."
     )
 
-    large_df = pd.DataFrame(
-        {
-            "ID": range(1, 101),
-            "First Name": [f"First_{i}" for i in range(1, 101)],
-            "Last Name": [f"Last_{i}" for i in range(1, 101)],
-            "Email": [f"user_{i}@example.com" for i in range(1, 101)],
-            "Phone": [f"+1-555-{i:04d}" for i in range(1, 101)],
-            "Street": [f"{i} Main St" for i in range(1, 101)],
-            "City": ["New York", "London", "Paris", "Tokyo", "Berlin"] * 20,
-            "Zip": [f"{10000 + i}" for i in range(1, 101)],
-            "Country": ["USA", "UK", "France", "Japan", "Germany"] * 20,
-        }
-    )
+    large_df = pd.DataFrame({
+        "ID": range(1, 101),
+        "First Name": [f"First_{i}" for i in range(1, 101)],
+        "Last Name": [f"Last_{i}" for i in range(1, 101)],
+        "Email": [f"user_{i}@example.com" for i in range(1, 101)],
+        "Phone": [f"+1-555-{i:04d}" for i in range(1, 101)],
+        "Street": [f"{i} Main St" for i in range(1, 101)],
+        "City": ["New York", "London", "Paris", "Tokyo", "Berlin"] * 20,
+        "Zip": [f"{10000 + i}" for i in range(1, 101)],
+        "Country": ["USA", "UK", "France", "Japan", "Germany"] * 20,
+    })
 
     ui.data_grid(
         large_df,
@@ -282,4 +274,4 @@ def index():
 
 if __name__ == "__main__":
     print("🚀 Running Feature Showcase on http://localhost:5001")
-    app.run(debug=True, port=5001)
+    app.run(port=5001)

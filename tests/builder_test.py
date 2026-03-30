@@ -1,5 +1,6 @@
 from collections.abc import Mapping
-from typing import Any, Optional
+from io import IOBase
+from typing import Any, cast
 
 import pytest
 from routelit import PropertyDict, RouteLitRequest
@@ -12,9 +13,9 @@ class MockRLRequest(RouteLitRequest):
         self,
         headers: Mapping[str, str] = {},
         path_params: Mapping[str, Any] = {},
-        referrer: Optional[str] = None,
+        referrer: str | None = None,
         is_json: bool = True,
-        json: Optional[dict[str, Any]] = None,
+        json: dict[str, Any] | None = None,
         query_params: Mapping[str, str] = {},
         query_param_list: Mapping[str, list[str]] = {},
         session_id: str = "123",
@@ -36,21 +37,21 @@ class MockRLRequest(RouteLitRequest):
         self._ui_event = None
 
     def get_headers(self) -> dict[str, str]:
-        return self.headers
+        return cast(dict[str, str], self.headers)
 
-    def get_path_params(self) -> Optional[Mapping[str, Any]]:
+    def get_path_params(self) -> Mapping[str, Any] | None:
         return self.path_params
 
-    def get_referrer(self) -> Optional[str]:
+    def get_referrer(self) -> str | None:
         return self.referrer
 
     def is_json(self) -> bool:
         return self._is_json
 
-    def get_json(self) -> Optional[dict[str, Any]]:
+    def get_json(self) -> dict[str, Any] | None:
         return self.json
 
-    def get_query_param(self, key: str) -> Optional[str]:
+    def get_query_param(self, key: str) -> str | None:
         return self.query_params.get(key)
 
     def get_query_param_list(self, key: str) -> list[str]:
@@ -65,8 +66,8 @@ class MockRLRequest(RouteLitRequest):
     def get_host(self) -> str:
         return self.host
 
-    def get_files(self) -> dict[str, Any]:
-        return {}
+    def get_files(self) -> list[IOBase] | None:
+        return []
 
     def is_multipart(self) -> bool:
         return False
@@ -101,6 +102,7 @@ class TestRLBuilder:
 
     def test_data_grid_pandas(self, builder: RLBuilder) -> None:
         import pandas as pd
+
         df = pd.DataFrame({"col1": [1, 2], "col2": ["a", "b"]})
         builder.data_grid(df)
 
