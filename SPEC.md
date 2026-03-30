@@ -1,7 +1,7 @@
 # routelit-glide-data-grid: Component Library Specification
 
-**Status:** In Planning  
-**Version:** 0.1.0  
+**Status:** In Planning
+**Version:** 0.1.0
 **Last Updated:** March 2026
 
 ---
@@ -270,7 +270,7 @@ Both components extend `RouteLitBuilder` following established routelit patterns
 
 1. **Builder Method**: `data_grid()` / `data_editor()` in `src/routelit_glide_data_grid/builder.py`
 2. **Element Creation**: `_create_element(name="grid_data_grid"|"grid_data_editor", props={...}, key=...)`
-3. **Props Transformation**: 
+3. **Props Transformation**:
    - Snake_case inputs → camelCase React props
    - Data serialization (pandas → JSON-compatible dicts)
    - Callback tracking (routes to event system)
@@ -689,9 +689,9 @@ routelit-glide-data-grid/
 
 ### Success Criteria
 
-✅ Phase 1 Beta: Read-only grid renders 10K+ rows smoothly  
-✅ Phase 2 Beta: Editable grid with callbacks working  
-✅ Phase 3 Beta: Full Streamlit API parity achieved  
+✅ Phase 1 Beta: Read-only grid renders 10K+ rows smoothly
+✅ Phase 2 Beta: Editable grid with callbacks working
+✅ Phase 3 Beta: Full Streamlit API parity achieved
 ✅ Phase 4 Release: Advanced features complete, production-ready
 
 ---
