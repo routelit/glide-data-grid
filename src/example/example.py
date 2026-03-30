@@ -221,6 +221,59 @@ def showcase_features(ui: RLBuilder):
             height=200,
         )
 
+    # 8. Alternative Data Formats (List & Dict)
+    ui.header("8. Alternative Data Formats")
+    ui.markdown(
+        "Glide Data Grid natively supports Python `list` (row-major) and `dict` (column-major) formats "
+        "in addition to pandas DataFrames."
+    )
+
+    col3, col4 = ui.columns(2)
+
+    with col3:
+        ui.subheader("From List of Dicts")
+        list_data = [
+            {"Task": "Research", "Status": "Done"},
+            {"Task": "Implementation", "Status": "In Progress"},
+            {"Task": "Testing", "Status": "Pending"},
+        ]
+        ui.data_grid(list_data, key="list-grid", height=200)
+
+    with col4:
+        ui.subheader("From Dict of Lists")
+        dict_data = {
+            "Metric": ["Throughput", "Latency", "Errors"],
+            "Value": [1200, 15.5, 2],
+            "Unit": ["req/s", "ms", "count"],
+        }
+        ui.data_grid(dict_data, key="dict-grid", height=200)
+
+    # 9. Extended Data Formats (Simple List & KV Dict)
+    ui.header("9. Extended Data Formats")
+    ui.markdown(
+        "Glide Data Grid also supports simple lists and key-value dictionaries "
+        "by automatically generating appropriate column names."
+    )
+
+    col5, col6 = ui.columns(2)
+
+    with col5:
+        ui.subheader("Simple List of Items")
+        ui.markdown("A `List[str]` automatically becomes a single 'value' column.")
+        plan_items = ["Initial Research", "Draft Spec", "Implementation", "QA Testing"]
+        ui.data_grid(plan_items, key="simple-list-grid", height=200)
+
+    with col6:
+        ui.subheader("Key-Value Dictionary")
+        ui.markdown("A simple `Dict[str, Any]` becomes 'key' and 'value' columns.")
+        kv_config = {
+            "version": "1.2.0",
+            "environment": "production",
+            "debug": False,
+            "max_connections": 100,
+        }
+        ui.data_grid(kv_config, key="kv-dict-grid", height=200)
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():

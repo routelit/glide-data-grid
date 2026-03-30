@@ -133,3 +133,22 @@ class TestRLBuilder:
             {"col1": 2, "col2": "b"},
         ]
         assert elements[0].props["numRows"] == "dynamic"
+
+    def test_data_grid_simple_list(self, builder: RLBuilder) -> None:
+        data = ["item1", "item2"]
+        builder.data_grid(data)
+
+        elements = builder.elements
+        assert elements[0].props["data"] == [{"value": "item1"}, {"value": "item2"}]
+        assert elements[0].props["columns"] == ["value"]
+
+    def test_data_grid_kv_dict(self, builder: RLBuilder) -> None:
+        data = {"key1": "val1", "key2": "val2"}
+        builder.data_grid(data)
+
+        elements = builder.elements
+        assert elements[0].props["data"] == [
+            {"key": "key1", "value": "val1"},
+            {"key": "key2", "value": "val2"},
+        ]
+        assert elements[0].props["columns"] == ["key", "value"]

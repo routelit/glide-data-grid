@@ -14,6 +14,8 @@ from .types import (
     IDColumn,
     MarkdownColumn,
     JsonColumn,
+    GridSelection,
+    SelectionCurrent,
 )
 
 __all__ = [
@@ -32,4 +34,6 @@ __all__ = [
     "IDColumn",
     "MarkdownColumn",
     "JsonColumn",
+    "GridSelection",
+    "SelectionCurrent",
 ]

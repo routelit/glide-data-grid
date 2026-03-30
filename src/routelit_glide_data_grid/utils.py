@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Union
 import pandas as pd
 
-def normalize_data(data: Union[pd.DataFrame, Dict[str, List[Any]], List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+def normalize_data(data: Any) -> List[Dict[str, Any]]:
     """
     Normalize various data formats into a row-major list of dicts.
     
@@ -9,24 +9,43 @@ def normalize_data(data: Union[pd.DataFrame, Dict[str, List[Any]], List[Dict[str
     - pandas.DataFrame
     - Dict[str, List[Any]] (column-major)
     - List[Dict[str, Any]] (row-major)
+    - List[Any] (simple list -> one "value" column)
+    - Dict[Any, Any] (key-value -> "key" and "value" columns)
     """
     if isinstance(data, pd.DataFrame):
         return data.to_dict(orient="records")
     
     if isinstance(data, dict):
-        # Column-major dict to row-major list of dicts
         keys = list(data.keys())
         if not keys:
             return []
         
-        num_rows = len(data[keys[0]])
-        return [
-            {key: data[key][i] for key in keys}
-            for i in range(num_rows)
-        ]
+        # Check if it's column-major (all values are lists of same length)
+        # or simple key-value.
+        first_val = data[keys[0]]
+        if isinstance(first_val, (list, tuple, pd.Series)):
+            num_rows = len(first_val)
+            return [
+                {key: data[key][i] for key in keys}
+                for i in range(num_rows)
+            ]
+        else:
+            # Key-value mapping
+            return [
+                {"key": k, "value": v}
+                for k, v in data.items()
+            ]
     
     if isinstance(data, list):
-        return data
+        if not data:
+            return []
+        
+        # If it's a list of dicts, it's already row-major
+        if isinstance(data[0], dict):
+            return data
+            
+        # Otherwise, treat as simple list
+        return [{"value": item} for item in data]
     
     raise ValueError(f"Unsupported data type: {type(data)}")
 

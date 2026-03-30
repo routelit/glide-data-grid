@@ -1,8 +1,21 @@
-from typing import Any, Callable, ClassVar, Iterable, Literal, Optional, Union, Tuple
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Iterable,
+    Literal,
+    Optional,
+    Union,
+    Tuple,
+    overload,
+    TypeVar,
+)
 import pandas as pd
 from routelit import AssetTarget, RouteLitBuilder  # type: ignore[import-untyped]
 from .utils import normalize_data, extract_columns, infer_column_types
-from .types import ColumnConfig
+from .types import ColumnConfig, GridSelection
+
+T = TypeVar("T", pd.DataFrame, dict, list)
 
 
 class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
@@ -121,7 +134,7 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
         search: Optional[str] = None,
         theme: Optional[dict[str, Any]] = None,
         key: Optional[str] = None,
-    ) -> Any:
+    ) -> Optional[GridSelection]:
         """
         Display a read-only, interactive data grid with optional row/column selection.
         """
@@ -174,6 +187,75 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
 
         return current_selection
 
+    @overload
+    def data_editor(
+        self,
+        data: pd.DataFrame,
+        *,
+        height: Union[Literal["auto", "content", "stretch"], int] = "auto",
+        width: Union[Literal["stretch", "content"], int] = "stretch",
+        hide_index: Optional[bool] = None,
+        row_height: Optional[int] = None,
+        row_markers: Optional[Literal["none", "number", "checkbox", "both"]] = None,
+        freeze_columns: int = 0,
+        freeze_trailing_rows: int = 0,
+        trailing_row_options: Optional[dict[str, Any]] = None,
+        num_rows: Literal["fixed", "dynamic", "add", "delete"] = "fixed",
+        disabled: Union[bool, Iterable[Union[str, int]]] = False,
+        on_change: Optional[Callable[[pd.DataFrame], None]] = None,
+        column_config: Optional[dict[str, Union[ColumnConfig, str, None]]] = None,
+        column_order: Optional[Iterable[str]] = None,
+        placeholder: Optional[str] = None,
+        theme: Optional[dict[str, Any]] = None,
+        key: Optional[str] = None,
+    ) -> pd.DataFrame: ...
+
+    @overload
+    def data_editor(
+        self,
+        data: dict,
+        *,
+        height: Union[Literal["auto", "content", "stretch"], int] = "auto",
+        width: Union[Literal["stretch", "content"], int] = "stretch",
+        hide_index: Optional[bool] = None,
+        row_height: Optional[int] = None,
+        row_markers: Optional[Literal["none", "number", "checkbox", "both"]] = None,
+        freeze_columns: int = 0,
+        freeze_trailing_rows: int = 0,
+        trailing_row_options: Optional[dict[str, Any]] = None,
+        num_rows: Literal["fixed", "dynamic", "add", "delete"] = "fixed",
+        disabled: Union[bool, Iterable[Union[str, int]]] = False,
+        on_change: Optional[Callable[[dict], None]] = None,
+        column_config: Optional[dict[str, Union[ColumnConfig, str, None]]] = None,
+        column_order: Optional[Iterable[str]] = None,
+        placeholder: Optional[str] = None,
+        theme: Optional[dict[str, Any]] = None,
+        key: Optional[str] = None,
+    ) -> dict: ...
+
+    @overload
+    def data_editor(
+        self,
+        data: list,
+        *,
+        height: Union[Literal["auto", "content", "stretch"], int] = "auto",
+        width: Union[Literal["stretch", "content"], int] = "stretch",
+        hide_index: Optional[bool] = None,
+        row_height: Optional[int] = None,
+        row_markers: Optional[Literal["none", "number", "checkbox", "both"]] = None,
+        freeze_columns: int = 0,
+        freeze_trailing_rows: int = 0,
+        trailing_row_options: Optional[dict[str, Any]] = None,
+        num_rows: Literal["fixed", "dynamic", "add", "delete"] = "fixed",
+        disabled: Union[bool, Iterable[Union[str, int]]] = False,
+        on_change: Optional[Callable[[list], None]] = None,
+        column_config: Optional[dict[str, Union[ColumnConfig, str, None]]] = None,
+        column_order: Optional[Iterable[str]] = None,
+        placeholder: Optional[str] = None,
+        theme: Optional[dict[str, Any]] = None,
+        key: Optional[str] = None,
+    ) -> list: ...
+
     def data_editor(
         self,
         data: Union[pd.DataFrame, dict, list],
@@ -194,7 +276,7 @@ class RLBuilder(RouteLitBuilder):  # type: ignore[no-any-unimported]
         placeholder: Optional[str] = None,
         theme: Optional[dict[str, Any]] = None,
         key: Optional[str] = None,
-    ) -> Any:
+    ) -> Union[pd.DataFrame, dict, list]:
         """
         Display an editable data grid with optional dynamic row management.
         """

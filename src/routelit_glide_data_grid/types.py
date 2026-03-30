@@ -1,5 +1,16 @@
-from typing import Any, Dict, List, Optional, Union, Literal
+from typing import Any, Dict, List, Optional, Union, Literal, TypedDict, Tuple
 from dataclasses import dataclass, asdict, field
+
+class SelectionCurrent(TypedDict, total=False):
+    """Represents the currently selected cell/range."""
+    cell: Tuple[int, int]
+    range: Dict[str, int] # x, y, width, height
+
+class GridSelection(TypedDict, total=False):
+    """Represents the selection state of the grid."""
+    rows: List[int]
+    columns: List[int]
+    current: Optional[SelectionCurrent]
 
 @dataclass
 class ColumnConfig:
