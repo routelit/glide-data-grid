@@ -6,6 +6,7 @@ site_author: Rolando Gomez Tabar
 edit_uri: edit/main/docs/
 repo_name: rolangom/routelit-glide-data-grid
 copyright: Maintained by <a href="https://rolangom.com">rolangom</a>.
+docs_dir: docs
 
 nav:
   - Home: index.md
