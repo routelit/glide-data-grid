@@ -1,8 +1,9 @@
 # RouteLit Glide Data Grid
 
-[![Release](https://img.shields.io/github/v/release/rolangom/routelit-glide-data-grid)](https://img.shields.io/github/v/release/rolangom/routelit-glide-data-grid)
-[![Build status](https://img.shields.io/github/actions/workflow/status/rolangom/routelit-glide-data-grid/main.yml?branch=main)](https://github.com/rolangom/routelit-glide-data-grid/actions/workflows/main.yml?query=branch%3Amain)
-[![License](https://img.shields.io/github/license/rolangom/routelit-glide-data-grid)](https://img.shields.io/github/license/rolangom/routelit-glide-data-grid)
+[![Release](https://img.shields.io/github/v/release/routelit/glide-data-grid)](https://img.shields.io/github/v/release/routelit/glide-data-grid)
+[![Build status](https://img.shields.io/github/actions/workflow/status/routelit/glide-data-grid/main.yml?branch=main)](https://github.com/routelit/glide-data-grid/actions/workflows/main.yml?query=branch%3Amain)
+[![codecov](https://codecov.io/gh/routelit/glide-data-grid/branch/main/graph/badge.svg)](https://codecov.io/gh/routelit/glide-data-grid)
+[![License](https://img.shields.io/github/license/routelit/glide-data-grid)](https://img.shields.io/github/license/routelit/glide-data-grid)
 
 `routelit-glide-data-grid` is a high-performance, interactive data grid component for RouteLit, powered by [Glide Data Grid](https://grid.glideapps.com/).
 
