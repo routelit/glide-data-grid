@@ -14,7 +14,7 @@
 
 - **🚀 Performance**: Smoothly renders millions of rows with native-speed scrolling.
 - **📝 Data Editing**: A powerful `data_editor` with validation and dynamic row management.
-- **🏗️ Advanced Layout**: 
+- **🏗️ Advanced Layout**:
     - **Frozen Columns & Trailing Rows**: Keep context visible while navigating large datasets.
     - **Column Grouping**: Merge headers into logical categories.
     - **Row Markers**: Custom index column with support for numbers, checkboxes, or both.
@@ -39,9 +39,9 @@ def app(ui: RLBuilder):
         "Name": ["Alice", "Bob", "Charlie"],
         "Role": ["Engineer", "Designer", "Manager"]
     })
-    
+
     ui.title("Project Dashboard")
-    
+
     # Render an interactive grid
     ui.data_grid(
         df,
@@ -85,5 +85,5 @@ make check
 
 ---
 
-Maintained by [Rolando Gomez Tabar](https://rolangom.com).  
+Maintained by [Rolando Gomez Tabar](https://rolangom.com).
 Initially generated with [fpgmaas/cookiecutter-uv](https://github.com/fpgmaas/cookiecutter-uv).
