@@ -47,6 +47,12 @@ jobs:
         with:
           name: pyproject-toml
 
+      - name: Build frontend
+        run: |
+          cd src/frontend
+          pnpm install
+          pnpm build
+
       - name: Build package
         run: uv build
 
@@ -72,3 +78,4 @@ jobs:
 
       - name: Deploy documentation
         run: uv run mkdocs gh-deploy --force
+        working-directory: .
