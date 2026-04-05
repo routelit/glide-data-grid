@@ -1,0 +1,41 @@
+{
+  "_index-CSX6Xy1G.js": {
+    "file": "index-CSX6Xy1G.js",
+    "name": "index",
+    "dynamicImports": [
+      "node_modules/.pnpm/@glideapps+glide-data-grid@6.0.3_lodash@4.17.23_marked@15.0.12_react-dom@19.0.0_react-respons_medzr6qe2hdsf63rvmsp3hikne/node_modules/@glideapps/glide-data-grid/dist/esm/internal/data-grid-overlay-editor/data-grid-overlay-editor.js",
+      "node_modules/.pnpm/@glideapps+glide-data-grid@6.0.3_lodash@4.17.23_marked@15.0.12_react-dom@19.0.0_react-respons_medzr6qe2hdsf63rvmsp3hikne/node_modules/@glideapps/glide-data-grid/dist/esm/internal/data-grid-overlay-editor/private/number-overlay-editor.js"
+    ]
+  },
+  "node_modules/.pnpm/@glideapps+glide-data-grid@6.0.3_lodash@4.17.23_marked@15.0.12_react-dom@19.0.0_react-respons_medzr6qe2hdsf63rvmsp3hikne/node_modules/@glideapps/glide-data-grid/dist/esm/internal/data-grid-overlay-editor/data-grid-overlay-editor.js": {
+    "file": "data-grid-overlay-editor-DNTNgzJC.js",
+    "name": "data-grid-overlay-editor",
+    "src": "node_modules/.pnpm/@glideapps+glide-data-grid@6.0.3_lodash@4.17.23_marked@15.0.12_react-dom@19.0.0_react-respons_medzr6qe2hdsf63rvmsp3hikne/node_modules/@glideapps/glide-data-grid/dist/esm/internal/data-grid-overlay-editor/data-grid-overlay-editor.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_index-CSX6Xy1G.js"
+    ]
+  },
+  "node_modules/.pnpm/@glideapps+glide-data-grid@6.0.3_lodash@4.17.23_marked@15.0.12_react-dom@19.0.0_react-respons_medzr6qe2hdsf63rvmsp3hikne/node_modules/@glideapps/glide-data-grid/dist/esm/internal/data-grid-overlay-editor/private/number-overlay-editor.js": {
+    "file": "number-overlay-editor-BrMAcyH8.js",
+    "name": "number-overlay-editor",
+    "src": "node_modules/.pnpm/@glideapps+glide-data-grid@6.0.3_lodash@4.17.23_marked@15.0.12_react-dom@19.0.0_react-respons_medzr6qe2hdsf63rvmsp3hikne/node_modules/@glideapps/glide-data-grid/dist/esm/internal/data-grid-overlay-editor/private/number-overlay-editor.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_index-CSX6Xy1G.js"
+    ]
+  },
+  "src/index.ts": {
+    "file": "routelit-glide-data-grid.es.js",
+    "name": "index",
+    "src": "src/index.ts",
+    "isEntry": true,
+    "imports": [
+      "_index-CSX6Xy1G.js"
+    ]
+  },
+  "style.css": {
+    "file": "frontend.css",
+    "src": "style.css"
+  }
+}
