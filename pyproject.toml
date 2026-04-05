@@ -52,6 +52,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/routelit_glide_data_grid"]
+ignore-vcs = true
 [tool.ty.environment]
 
 python = "./.venv"
