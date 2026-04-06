@@ -26,7 +26,7 @@ build-frontend: ## Build the frontend
 .PHONY: build
 build: clean-build build-frontend ## Build wheel file
 	@echo "🚀 Creating wheel file"
-	@uv build --wheel
+	@uvx --from build pyproject-build --installer uv
 
 .PHONY: clean-build
 clean-build: ## Clean build artifacts
